@@ -71,7 +71,7 @@ The primary architectural goal is absolute operational resilience: the command p
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │                  Application Sync Protocol Engine                      │
-│        (ChangeRecords, Monotonic Sequence Numbers, Vector Clock)       │
+│        (ChangeRecords, Device Sequence Numbers, Field Revisions)       │
 └───────────────────────────────────┬────────────────────────────────────┘
                                     │
     ┌───────────────────────────────┴───────────────────────────────┐
