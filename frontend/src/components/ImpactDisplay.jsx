@@ -1,79 +1,76 @@
 import React from 'react';
-import { ShieldAlert, GitCommit, CornerDownRight } from 'lucide-react';
+import { AlertCircle, ArrowRight, ShieldAlert, Activity, CheckCircle2 } from 'lucide-react';
+import { useOperationalState } from '../context/OperationalStateContext';
 
 export default function ImpactDisplay({ impactSet }) {
-  if (!impactSet) return null;
+  const { missions } = useOperationalState();
+
+  if (!impactSet) {
+    return (
+      <div className="p-8 text-center text-slate-500 text-xs bg-slate-50 rounded-lg border border-dashed border-slate-200">
+        No active incident impact calculated.
+      </div>
+    );
+  }
+
+  const directIds = impactSet.directly_impacted_mission_ids || [];
+  const transitiveIds = impactSet.transitively_impacted_mission_ids || [];
+
+  const directMissions = missions.filter((m) => directIds.includes(m.id));
+  const transitiveMissions = missions.filter((m) => transitiveIds.includes(m.id));
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-6 shadow-2xl backdrop-blur space-y-6">
-      <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-        <div className="flex items-center space-x-3">
-          <ShieldAlert className="h-6 w-6 text-rose-400" />
+    <div className="space-y-4">
+      {/* Metrics Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-lg flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-slate-100">
-              Deterministic Impact Analysis Result
-            </h3>
-            <p className="text-xs font-mono text-slate-400">
-              Target Entity: <span className="text-cyan-300">{impactSet.target_entity_name}</span> ({impactSet.target_entity_id})
-            </p>
+            <div className="text-xs font-semibold text-rose-800">Directly Disrupted Missions</div>
+            <div className="text-2xl font-bold text-rose-950 mt-1">{directIds.length}</div>
           </div>
+          <AlertCircle className="h-6 w-6 text-rose-600" />
         </div>
 
-        <span className={`px-3 py-1 rounded-full font-mono text-xs font-bold uppercase border ${
-          impactSet.severity === 'CRITICAL'
-            ? 'bg-rose-950/80 text-rose-400 border-rose-800'
-            : 'bg-amber-950/80 text-amber-400 border-amber-800'
-        }`}>
-          {impactSet.severity} SEVERITY
-        </span>
-      </div>
-
-      <div className="p-4 rounded-lg bg-slate-950/80 border border-slate-800 text-xs font-mono text-slate-300">
-        <span className="text-slate-500 uppercase tracking-wider block mb-1">Engine Summary:</span>
-        {impactSet.summary_reason}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4 space-y-3">
-          <div className="flex items-center space-x-2 text-xs font-mono uppercase text-amber-400 font-semibold border-b border-slate-800/60 pb-2">
-            <GitCommit className="h-4 w-4" />
-            <span>Direct Downstream Impacts ({impactSet.directly_affected.length})</span>
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold text-amber-800">Cascade Affected Missions</div>
+            <div className="text-2xl font-bold text-amber-950 mt-1">{transitiveIds.length}</div>
           </div>
+          <Activity className="h-6 w-6 text-amber-600" />
+        </div>
 
-          {impactSet.directly_affected.length === 0 ? (
-            <p className="text-xs text-slate-500 font-mono italic">No direct downstream impacts.</p>
-          ) : (
-            <div className="space-y-2">
-              {impactSet.directly_affected.map((item, idx) => (
-                <div key={idx} className="p-2.5 rounded bg-slate-900 border border-slate-800 text-xs font-mono space-y-1">
-                  <div className="font-semibold text-slate-200">{item.entity_name}</div>
-                  <div className="text-slate-400 text-[11px]">{item.reason}</div>
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between">
+          <div>
+            <div className="text-xs font-semibold text-slate-700">Total Operational Risk</div>
+            <div className="text-2xl font-bold text-slate-900 mt-1">{directIds.length + transitiveIds.length}</div>
+          </div>
+          <ShieldAlert className="h-6 w-6 text-slate-500" />
+        </div>
+      </div>
+
+      {/* Disrupted Missions Timeline Impact Breakdown */}
+      {directMissions.length > 0 && (
+        <div className="p-4 bg-white border border-slate-200 rounded-lg space-y-3">
+          <div className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+            Directly Affected Mission Timeline Shifts
+          </div>
+          <div className="space-y-2">
+            {directMissions.map((m) => (
+              <div key={m.id} className="p-3 bg-rose-50/60 border border-rose-200 rounded-md text-xs flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-rose-950">{m.name}</div>
+                  <div className="text-rose-800 text-[11px]">{m.objective}</div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-slate-950/60 border border-slate-800/80 rounded-lg p-4 space-y-3">
-          <div className="flex items-center space-x-2 text-xs font-mono uppercase text-rose-400 font-semibold border-b border-slate-800/60 pb-2">
-            <CornerDownRight className="h-4 w-4" />
-            <span>Transitive Cascading Impacts ({impactSet.transitively_affected.length})</span>
-          </div>
-
-          {impactSet.transitively_affected.length === 0 ? (
-            <p className="text-xs text-slate-500 font-mono italic">No transitive impacts detected.</p>
-          ) : (
-            <div className="space-y-2">
-              {impactSet.transitively_affected.map((item, idx) => (
-                <div key={idx} className="p-2.5 rounded bg-slate-900 border border-slate-800 text-xs font-mono space-y-1">
-                  <div className="font-semibold text-slate-200">{item.entity_name}</div>
-                  <div className="text-slate-400 text-[11px]">{item.reason}</div>
+                <div className="flex items-center space-x-2 font-mono text-[11px] bg-white px-2.5 py-1 rounded border border-rose-200 text-rose-900">
+                  <span>Planned: Day {m.start_day}</span>
+                  <ArrowRight className="h-3 w-3 text-rose-500" />
+                  <span className="font-bold text-rose-700">Delayed: Day {m.start_day + 3}</span>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

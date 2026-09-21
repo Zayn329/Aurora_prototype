@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useOperationalState } from '../context/OperationalStateContext';
 import { Package, Truck, AlertTriangle, Search, Filter } from 'lucide-react';
+import CargoFlow from '../components/CargoFlow';
 import { useNavigate } from 'react-router-dom';
 
 export default function LogisticsPage() {
   const { cargoList, loading } = useOperationalState();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [selectedCargoFlow, setSelectedCargoFlow] = useState(null);
   const navigate = useNavigate();
 
   if (loading) {
@@ -33,6 +35,9 @@ export default function LogisticsPage() {
           Track expedition equipment, fuel, scientific gear, and vital supplies.
         </p>
       </div>
+
+      {/* Cargo Flow Pipeline Section */}
+      {selectedCargoFlow && <CargoFlow item={selectedCargoFlow} />}
 
       {/* Filter and Search Bar */}
       <div className="bg-white border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
@@ -100,7 +105,13 @@ export default function LogisticsPage() {
                     {item.status}
                   </span>
                 </td>
-                <td className="py-3 px-4 text-right">
+                <td className="py-3 px-4 text-right space-x-2">
+                  <button
+                    onClick={() => setSelectedCargoFlow(item)}
+                    className="px-2.5 py-1 text-[11px] font-medium bg-sky-50 hover:bg-sky-100 text-sky-800 rounded border border-sky-200 transition"
+                  >
+                    Track Flow
+                  </button>
                   <button
                     onClick={() => navigate(`/incidents?cargoId=${item.id}`)}
                     className="px-2.5 py-1 text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 rounded border border-slate-200 transition"

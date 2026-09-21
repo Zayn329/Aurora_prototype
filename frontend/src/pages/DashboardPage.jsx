@@ -1,6 +1,7 @@
 import React from 'react';
 import { useOperationalState } from '../context/OperationalStateContext';
 import { Compass, Package, AlertTriangle, Activity, ArrowRight } from 'lucide-react';
+import OperationalMap from '../components/OperationalMap';
 import { Link } from 'react-router-dom';
 
 export default function DashboardPage() {
@@ -79,6 +80,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Geo-Spatial Map Section */}
+      <OperationalMap />
 
       {/* Active Operational Sections */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

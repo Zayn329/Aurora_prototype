@@ -87,7 +87,15 @@ export default function MissionsPage() {
         </div>
 
         {/* Mission Detail View */}
-        {currentMission && (
+        {missions.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-lg p-8 shadow-sm text-center text-xs text-slate-500 lg:col-span-2 flex flex-col items-center justify-center space-y-2">
+            <Compass className="h-8 w-8 text-slate-400" />
+            <div className="font-semibold text-slate-700">No Missions Loaded in Local State</div>
+            <p className="text-slate-500 max-w-sm">
+              Connect to the base station backend or reset state in the System menu to populate synthetic expedition missions.
+            </p>
+          </div>
+        ) : currentMission ? (
           <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-6 lg:col-span-2">
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
@@ -157,7 +165,7 @@ export default function MissionsPage() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

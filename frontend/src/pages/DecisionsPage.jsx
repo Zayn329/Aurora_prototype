@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useOperationalState } from '../context/OperationalStateContext';
-import { CheckSquare, Shield, FileText, CheckCircle2, XCircle, ArrowRight } from 'lucide-react';
+import { CheckSquare, Shield, FileText, CheckCircle2, XCircle, ArrowRight, Flame } from 'lucide-react';
+import WarRoomModal from '../components/WarRoomModal';
 
 export default function DecisionsPage() {
   const { impactSet, loading } = useOperationalState();
   const [decisionSubmitted, setDecisionSubmitted] = useState(false);
+  const [warRoomOpen, setWarRoomOpen] = useState(false);
 
   if (loading) {
     return (
@@ -26,12 +28,23 @@ export default function DecisionsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-xl font-bold text-slate-900 tracking-tight">Commander Decisions & Review</h2>
-        <p className="text-xs text-slate-500">
-          Review decision support proposals, verify SOP citations, and approve or reject schedule adjustments.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Commander Decisions & Review</h2>
+          <p className="text-xs text-slate-500">
+            Review decision support proposals, verify SOP citations, and approve or reject schedule adjustments.
+          </p>
+        </div>
+        <button
+          onClick={() => setWarRoomOpen(true)}
+          className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-md shadow-sm flex items-center space-x-1.5"
+        >
+          <Flame className="h-4 w-4" />
+          <span>Emergency War Room</span>
+        </button>
       </div>
+
+      <WarRoomModal isOpen={warRoomOpen} onClose={() => setWarRoomOpen(false)} />
 
       {decisionSubmitted ? (
         <div className="bg-white border border-slate-200 rounded-lg p-8 shadow-sm text-center max-w-md mx-auto space-y-4">
