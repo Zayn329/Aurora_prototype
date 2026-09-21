@@ -2,9 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-polar-bg: #f8fafc;
+  --color-polar-surface: #ffffff;
+  --color-polar-surface-hover: #f1f5f9;
+  --color-polar-border: #e2e8f0;
+  --color-polar-border-strong: #cbd5e1;
+  --color-polar-navy: #0f172a;
+  --color-polar-subtext: #475569;
+  --color-polar-ice: #0284c7;
+  --color-polar-ice-light: #e0f2fe;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background-color: #020617;
-  color: #f8fafc;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f8fafc;
+  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Polar Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
