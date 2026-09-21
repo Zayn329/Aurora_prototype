@@ -214,7 +214,14 @@ The primary acceptance target for the initial Aurora implementation is a single,
 - LLM decision-support agents become active.
 - External weather feeds refresh.
 
-Loss of connectivity MUST degraded ONLY the AI enhancement layer, never the operational core.
+### Local Transport & Synchronization Specification
+- Offline synchronization may use supported local transports, including BLE-based peer/bridge transport where available. The synchronization mechanism must remain transport-agnostic at the application-protocol level.
+- BLE is strictly a physical transport mechanism, not a business capability or standalone MVP feature.
+- BLE is not required for the deterministic operational core to function offline.
+- Loss or unavailability of BLE transport must not prevent local deterministic state inspection, mission updates, or impact analysis.
+- The detailed application synchronization protocol and transport adapter implementation remain defined by `docs/architecture.md`. No specialized or custom BLE hardware is required by the Aurora core specification.
+
+Loss of connectivity MUST degrade ONLY the AI enhancement layer, never the operational core.
 
 ---
 

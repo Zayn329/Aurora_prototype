@@ -134,6 +134,13 @@ AI Recommendation → Human Commander → Approve / Modify / Reject → Operatio
 
 Online AI must **never** be a hidden dependency for basic core features.
 
+### Synchronization & Local Transport Boundary Rule
+1. Offline synchronization may utilize supported local transport adapters, including BLE (Bluetooth Low Energy) or peer bridge transport.
+2. BLE is strictly a physical transport mechanism for Aurora's transport-agnostic application sync protocol, NOT a core domain dependency or business feature.
+3. The application synchronization protocol MUST remain transport-agnostic so that identical synchronization semantics operate over local HTTP/IP networks, BLE, or other local transports.
+4. BLE transport logic MUST remain isolated inside the transport adapter layer (`backend/sync/ble_adapter.py`). Browser BLE limitations must be addressed via the companion/bridge mechanism defined in `docs/architecture.md` without altering core domain architecture.
+5. BLE must NOT become a dependency for deterministic offline state operation, dependency/impact analysis, mission management, AI/RAG/agents, MCP, or human approval workflows.
+
 ---
 
 ## 6. Demo Scope & Vertical Slice Focus
