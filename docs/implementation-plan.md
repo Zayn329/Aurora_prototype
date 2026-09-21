@@ -36,37 +36,40 @@ Create/Modify Mission
 - **P1 (Core MVP Scope):** High-priority features that round out the 75% SIH operational platform.
 - **P2 (Stretch / Secondary Polish):** Enhancements executed only after all P0 and P1 capabilities are fully verified.
 
+> **BLE Transport Priority Rule:**
+> **BLE is a P1 transport capability and must not block the P0 canonical operational demo. The application synchronization protocol must work through the primary local HTTP/network transport before BLE is added as an additional transport adapter.**
+
 ### Critical Path Sequence
 ```text
-Phase 0: Repository Foundation
+Phase 0: Repository Foundation (P0)
   ↓
-Phase 1: Domain Model + Authoritative State
+Phase 1: Domain Model + Authoritative State (P0)
   ↓
-Phase 2: Deterministic State Engine (DAG & Impact)
+Phase 2: Deterministic State Engine [DAG & Impact] (P0)
   ↓
-Phase 3: FastAPI Application / API Layer
+Phase 3: FastAPI Application / API Layer (P0)
   ↓
-Phase 4: First Working Frontend (React Dashboard)
+Phase 4: First Working Frontend [React Dashboard] (P0)
   ↓
-Phase 5: Client-Side Offline Replica (IndexedDB)
+Phase 5: Client-Side Offline Replica [IndexedDB] (P0)
   ↓
-Phase 6: Application Synchronization Engine
+Phase 6: Application Synchronization Engine [Local Transport] (P0)
   ↓
-Phase 7: Local Transports + BLE Adapter
+Phase 8: RAG Pipeline [ChromaDB + SOPs] (P0)
   ↓
-Phase 8: RAG Pipeline (ChromaDB + SOPs)
+Phase 9: MCP Tool Gateway (P0)
   ↓
-Phase 9: MCP Tool Gateway
+Phase 10: LangGraph + Groq Agents (P0)
   ↓
-Phase 10: LangGraph + Groq Agents
+Phase 11: Human Approval Gate + Action Application (P0)
   ↓
-Phase 11: Human Approval Gate + Action Application
+Phase 7: Local Transports + BLE Adapter (P1 - Non-blocking transport adapter)
   ↓
-Phase 12: Resource Forecasting + Emergency Mode
+Phase 12: Resource Forecasting + Emergency Mode (P1)
   ↓
-Phase 13: End-to-End Integration & Failure Modes
+Phase 13: End-to-End Integration & Failure Modes (P0)
   ↓
-Phase 14: SIH Demo Hardening
+Phase 14: SIH Demo Hardening (P0)
 ```
 
 ---
@@ -104,8 +107,11 @@ Phase 14: SIH Demo Hardening
 │ Phase 6: Sync Protocol │          │ Phase 9: FastMCP Tool  │
 └───────────┬────────────┘          └───────────┬────────────┘
             │                                   │
+            ├───────────────────────────────────┤
+            │                                   │
 ┌───────────▼────────────┐          ┌───────────▼────────────┐
 │ Phase 7: BLE Adapter   │          │ Phase 10: Agents (Groq)│
+│ (P1 Transport Adapter) │          │ (P0 Core Demo Path)    │
 └───────────┬────────────┘          └───────────┬────────────┘
             │                                   │
             └──────────────────┬────────────────┘
@@ -151,12 +157,12 @@ Phase 14: SIH Demo Hardening
 ---
 
 ### PHASE 1 — DOMAIN MODEL + AUTHORITATIVE STATE
-- **Goal:** Implement SQLModel entity definitions and SQLite database persistence for core operational domain objects.
-- **Why this phase exists:** Establish the single source of truth for all operational state.
+- **Goal:** Implement SQLModel entity definitions and central SQLite database persistence for core operational domain objects.
+- **Why this phase exists:** Establish the single global authoritative source of truth for all operational state.
 - **Prerequisites:** Phase 0.
 - **Tasks:**
   1. Implement SQLModel classes in `backend/core/models.py`: `Station`, `Mission`, `Cargo`, `Asset`, `Personnel`, `Dependency`, `Disruption`, `Recommendation`, `ApprovalAudit`.
-  2. Configure SQLite connection in `backend/persistence/database.py` with WAL mode enabled.
+  2. Configure central SQLite connection in `backend/persistence/database.py` with WAL mode enabled.
   3. Implement synthetic seed dataset generator in `backend/persistence/seed.py` matching spec data requirements (3 stations, 5 missions, 10 cargo, 4 assets, 8 personnel).
 - **Expected Files:** `backend/core/models.py`, `backend/persistence/database.py`, `backend/persistence/seed.py`.
 - **Acceptance Criteria:** SQLite database initializes cleanly; seed script populates all entities with deterministic GUIDs.
@@ -169,7 +175,7 @@ Phase 14: SIH Demo Hardening
 
 ### PHASE 2 — DETERMINISTIC STATE ENGINE
 - **Goal:** Build the NetworkX DAG dependency solver, cycle detector, and disruption impact engine.
-- **Why this phase exists:** The core value proposition of Aurora is deterministic impact propagation that runs 100% offline without AI.
+- **Why this phase exists:** The core value proposition of Aurora is deterministic impact propagation that runs fully offline without AI, internet, or external network dependencies.
 - **Prerequisites:** Phase 1.
 - **Tasks:**
   1. Implement `backend/core/graph_solver.py`: Convert database dependencies into NetworkX Directed Acyclic Graph (DAG).
@@ -177,7 +183,7 @@ Phase 14: SIH Demo Hardening
   3. Implement impact traversal: Given a `Cargo` delay disruption event, traverse outbound DAG edges to identify directly and transitively affected `Missions` and `Assets`.
   4. Implement `backend/core/constraints.py`: Evaluate fuel, power, and temporal overlaps.
 - **Expected Files:** `backend/core/graph_solver.py`, `backend/core/constraints.py`, `tests/test_deterministic_core.py`.
-- **Acceptance Criteria:** Cargo delay correctly marks dependent missions as `IMPACTED`; cycle attempts are rejected; results are 100% reproducible.
+- **Acceptance Criteria:** Cargo delay correctly marks dependent missions as `IMPACTED`; cycle attempts are rejected; results are reproducible for identical operational state and disruption inputs.
 - **Verification:** Run `pytest tests/test_deterministic_core.py` verifying direct and transitive impact propagation offline.
 - **Demo Value:** Demonstrates real deterministic disruption analysis without AI.
 - **Priority:** P0
@@ -224,10 +230,10 @@ Phase 14: SIH Demo Hardening
 
 ### PHASE 5 — CLIENT-SIDE OFFLINE REPLICA
 - **Goal:** Implement client-side IndexedDB database (Dexie.js) and local `mutation_queue` for PWA browser offline operation.
-- **Why this phase exists:** Enable field laptops and tablets to view operational state and record offline mutations when backend connectivity is severed.
+- **Why this phase exists:** Enable field laptops and tablets to view client state replicas and record offline mutations when backend connectivity is severed.
 - **Prerequisites:** Phase 4.
 - **Tasks:**
-  1. Implement `frontend/src/services/indexedDBStore.js`: Define Dexie.js schema for missions, cargo, assets, and `mutation_queue`.
+  1. Implement `frontend/src/services/indexedDBStore.js`: Define Dexie.js schema for local state replicas of missions, cargo, assets, and `mutation_queue`.
   2. Implement hydration & optimistic update logic in `OperationalStateContext.jsx`.
   3. Implement offline mutation queuing: When offline, state edits write to IndexedDB `mutation_queue` with `synced = false`.
 - **Expected Files:** `frontend/src/services/indexedDBStore.js`, `frontend/src/context/OperationalStateContext.jsx`.
@@ -235,13 +241,13 @@ Phase 14: SIH Demo Hardening
 - **Verification:** Disconnect network in browser DevTools; verify local edits persist in IndexedDB and queue for sync.
 - **Demo Value:** Demonstrates true offline PWA responsiveness.
 - **Priority:** P0
-- **Definition of Done:** Client app operates offline seamlessly using local IndexedDB replicas.
+- **Definition of Done:** Client app operates offline seamlessly using local IndexedDB state replicas.
 
 ---
 
 ### PHASE 6 — SYNCHRONIZATION ENGINE
-- **Goal:** Implement the transport-agnostic Application Sync Protocol engine with field-level Last-Write-Wins (LWW) conflict resolution.
-- **Why this phase exists:** Enable peer-to-peer state reconciliation across field devices and the central base station backend.
+- **Goal:** Implement the transport-agnostic Application Sync Protocol engine with field-level Last-Write-Wins (LWW) conflict resolution over local HTTP transport.
+- **Why this phase exists:** Enable peer-to-peer state reconciliation across field devices and the central base station backend over primary local network routes.
 - **Prerequisites:** Phase 5.
 - **Tasks:**
   1. Implement `backend/sync/protocol.py`: Format `ChangeRecord` payloads with `device_id`, `device_seq_num`, `timestamp_utc`, and `field_revisions`.
@@ -251,25 +257,25 @@ Phase 14: SIH Demo Hardening
 - **Expected Files:** `backend/sync/protocol.py`, `backend/api/routes_sync.py`, `frontend/src/context/SyncContext.jsx`, `tests/test_sync_engine.py`.
 - **Acceptance Criteria:** Two isolated database instances reconcile queued offline changes deterministically upon connection.
 - **Verification:** Run `pytest tests/test_sync_engine.py` simulating multi-device operation merging and deduplication.
-- **Demo Value:** Multi-device synchronization operating deterministically.
+- **Demo Value:** Multi-device synchronization operating deterministically over local transport.
 - **Priority:** P0
-- **Definition of Done:** Offline mutations replay, resolve conflicts via LWW, and converge state identically across instances.
+- **Definition of Done:** Offline mutations replay, resolve conflicts via LWW, and reconcile with authoritative central state.
 
 ---
 
 ### PHASE 7 — LOCAL TRANSPORTS + BLE ADAPTER
 - **Goal:** Implement physical transport adapters, isolating BLE GATT communication into a dedicated physical transport layer.
-- **Why this phase exists:** Allow field devices to exchange sync records over local HTTP or BLE without touching domain logic.
+- **Why this phase exists:** Allow field devices to exchange sync records over local BLE transport as an additional local transport adapter without touching domain logic.
 - **Prerequisites:** Phase 6.
 - **Tasks:**
-  1. Implement `backend/sync/ble_adapter.py`: Manage 512-byte GATT packet chunking, headers, CRC checksums, and TTL hop decrements.
+  1. Implement `backend/sync/ble_adapter.py`: Implement BLE GATT transport with packet chunking, integrity validation, and hop/TTL handling according to `docs/architecture.md`.
   2. Implement `scripts/device_bridge.py`: Python daemon using `bleak` for background BLE scanning and store-and-forward relay.
   3. Implement Web Bluetooth integration in `frontend/src/services/bleService.js`.
 - **Expected Files:** `backend/sync/ble_adapter.py`, `scripts/device_bridge.py`, `frontend/src/services/bleService.js`.
 - **Acceptance Criteria:** Compressed sync payload chunks travel over BLE transport adapter and rebuild cleanly into application `ChangeRecord` objects.
 - **Verification:** Test script executing packet chunking, transmission, assembly, and CRC verification.
 - **Demo Value:** Peer-to-peer BLE sync capability in disconnected environments.
-- **Priority:** P1
+- **Priority:** P1 (Non-blocking transport capability)
 - **Definition of Done:** Sync payloads transfer successfully over BLE transport adapter and process through the Sync Protocol.
 
 ---
@@ -330,7 +336,7 @@ Phase 14: SIH Demo Hardening
 - **Why this phase exists:** Ensure AI recommendations never mutate database entities silently without explicit Commander confirmation.
 - **Prerequisites:** Phase 10.
 - **Tasks:**
-  1. Implement `backend/core/approval_engine.py`: Handle `Approve`, `Modify`, and `Reject` actions. Apply approved updates to SQLite database.
+  1. Implement `backend/core/approval_engine.py`: Handle `Approve`, `Modify`, and `Reject` actions. Apply approved updates to central SQLite database.
   2. Implement `backend/api/routes_approvals.py`: REST routes for pending proposals and approval submissions.
   3. Implement `ApprovalModal.jsx` in frontend: UI modal displaying current state, impact set, AI proposal, RAG citations, and `Approve`/`Reject` controls.
   4. Implement immutable audit logging: Record `ApprovalAudit` entries upon decision submission.
@@ -385,7 +391,7 @@ Phase 14: SIH Demo Hardening
 - **Prerequisites:** Phase 13.
 - **Tasks:**
   1. Add UI state indicators for Loading, Empty, Offline, AI Degraded, and Pending Approval.
-  2. Implement `POST /api/v1/system/reset` endpoint to reset database to initial seed state instantly between evaluator demos.
+  2. Implement `POST /api/v1/system/reset` endpoint to reset central SQLite database to initial seed state instantly between evaluator demos.
   3. Perform responsive layout checks on mobile (375px), tablet (768px), and desktop (1920px) viewports.
   4. Verify zero credentials exposed in client bundles or log outputs.
   5. Finalize `README.md` with one-command execution instructions (`./scripts/dev_run.sh`).
@@ -404,8 +410,8 @@ Phase 14: SIH Demo Hardening
 | :--- | :--- | :--- |
 | **Checkpoint A** | Phase 2 | Backend deterministic core processes cargo delay disruption and computes DAG impact offline. |
 | **Checkpoint B** | Phase 4 | React UI renders operational dashboard, cargo tracker, and highlights impacted missions visually. |
-| **Checkpoint C** | Phase 5 | PWA operates offline using IndexedDB replica; queues mutations when network is disconnected. |
-| **Checkpoint D** | Phase 6 | Multi-device synchronization reconciles offline change records deterministically using field-level LWW. |
+| **Checkpoint C** | Phase 5 | PWA operates offline using IndexedDB client replica; queues mutations when network is disconnected. |
+| **Checkpoint D** | Phase 6 | Multi-device synchronization reconciles offline change records deterministically over local transport. |
 | **Checkpoint E** | Phase 9 | FastMCP tool gateway exposes read-only state inspectors with Pydantic validation. |
 | **Checkpoint F** | Phase 10 | LangGraph agents generate structured rescheduling proposals backed by ChromaDB RAG SOP citations. |
 | **Checkpoint G** | Phase 11 | Commander reviews AI proposal in UI modal, clicks `Approve`, and authoritative state mutates cleanly. |
@@ -432,10 +438,49 @@ Phase 14: SIH Demo Hardening
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-1. **Deterministic Core Tests (`tests/test_deterministic_core.py`):** Verify DAG graph traversal, cycle prevention (`CyclicDependencyError`), and reproducible impact set outputs.
-2. **Sync Protocol Tests (`tests/test_sync_engine.py`):** Test operation deduplication, field-level LWW conflict resolution, and deterministic convergence.
-3. **Agent & RAG Validation Tests (`tests/test_agent_workflows.py`, `tests/test_rag.py`):** Validate ChromaDB similarity search citations and Pydantic schema enforcement on LLM outputs.
-4. **Human Approval Gate Tests (`tests/test_approval_gate.py`):** Assert database tables cannot mutate without explicit approval actions.
+The Aurora testing suite is organized into four explicit, mandatory categories:
+
+### 1. UNIT TESTING
+Tests isolated functions, classes, and domain modules:
+- Deterministic DAG graph traversal and impact propagation
+- Cycle prevention checks (`CyclicDependencyError`)
+- Capacity, power, and fuel constraint calculations
+- Sync protocol conflict resolution (field-level LWW merger)
+- `ChangeRecord` payload serialization and validation
+- RAG document chunking and embedding generation
+- MCP tool input/output schema validation
+- Approval engine transaction validation
+
+### 2. INTEGRATION TESTING
+Verifies interactions and data flows across system layer boundaries:
+- Frontend → FastAPI REST endpoints
+- FastAPI → Deterministic Core Engine
+- Deterministic Core → SQLite Authoritative Database
+- IndexedDB Client Replica → Synchronization Engine
+- Sync Protocol → Transport Adapters (Local HTTP & BLE)
+- MCP Gateway → Operational State Inspection Services
+- LangGraph Agents → MCP Tools / ChromaDB RAG Context
+- Approval Engine → Authoritative SQLite Database Mutations
+
+### 3. REGRESSION TESTING
+Guarantees previously validated P0 capabilities remain operational as implementation progresses. All P0 capabilities must have repeatable regression tests executed during every phase validation:
+- Canonical cargo-delay disruption scenario
+- Deterministic DAG impact propagation and reproducible impact outputs
+- Offline state inspection and PWA responsiveness
+- Multi-device synchronization convergence
+- Human-in-the-Loop approval gate enforcement
+- AI service failure fallback to deterministic rule engine
+- RAG SOP citation accuracy and source metadata preservation
+
+*Rule:* Regression tests must NEVER be weakened or deleted merely to make a new feature pass.
+
+### 4. BACKWARD COMPATIBILITY TESTING
+Verifies compatibility with intentionally retained system contracts:
+- Established FastAPI REST API schemas and JSON response shapes
+- Persisted synthetic seed dataset structure and deterministic GUIDs
+- `ChangeRecord` serialization formats and sync protocol payloads
+- React state context interfaces and IndexedDB store schemas
+- Canonical end-to-end demonstration workflow steps
 
 ---
 
@@ -496,12 +541,13 @@ Coding agents are strictly prohibited from wasting implementation effort on:
 
 The Aurora implementation is considered complete for the SIH project target when:
 
-1. **Deterministic Core Works Offline:** Missions, cargo, assets, and dependency constraints persist in SQLite/IndexedDB and process disruption events deterministically via NetworkX DAG traversal without AI or network connectivity.
-2. **Canonical Vertical Slice Operates End-to-End:** Ingesting a cargo delay calculates impact, triggers LangGraph/Groq AI rescheduling with ChromaDB RAG SOP citations, presents a proposal in the UI, and mutates authoritative state ONLY upon explicit Commander approval.
-3. **Offline Client & Sync Function:** React UI renders cached state offline via IndexedDB; changes queue in `mutation_queue` and reconcile deterministically across devices via field-level LWW sync protocol.
-4. **AI/Transport Fallbacks Work Gracefully:** Loss of Groq API, ChromaDB, or BLE degrades only the enhancement layer, falling back to rule engines while keeping the deterministic core fully operational.
-5. **Evaluator Reset Path Exists:** Evaluators can trigger `POST /api/v1/system/reset` to restore the pre-packaged seed dataset instantly for repeatable demonstration walkthroughs.
-6. **No Fake Functionality:** Zero fake UI buttons, mock AI responses presented as live reasoning, or hardcoded success states exist. All displayed data reflects real system state.
+1. **Deterministic Core Works Offline:** Missions, cargo, assets, and dependency constraints persist in SQLite (authoritative) / IndexedDB (client replica) and process disruption events deterministically via NetworkX DAG traversal without AI or network connectivity.
+2. **Authoritative State vs. Client Replica Semantics Preserved:** Authoritative operational state persists in central SQLite, while supported client state is replicated in IndexedDB for offline operation.
+3. **Canonical Vertical Slice Operates End-to-End:** Ingesting a cargo delay calculates impact, triggers LangGraph/Groq AI rescheduling with ChromaDB RAG SOP citations, presents a proposal in the UI, and mutates authoritative state ONLY upon explicit Commander approval.
+4. **Offline Client & Sync Function:** React UI renders cached state offline via IndexedDB; changes queue in `mutation_queue` and reconcile deterministically across devices via field-level LWW sync protocol.
+5. **AI/Transport Fallbacks Work Gracefully:** Loss of Groq API, ChromaDB, or BLE degrades only the enhancement layer, falling back to rule engines while keeping the deterministic core fully operational.
+6. **Evaluator Reset Path Exists:** Evaluators can trigger `POST /api/v1/system/reset` to restore the pre-packaged seed dataset instantly for repeatable demonstration walkthroughs.
+7. **No Fake Functionality:** Zero fake UI buttons, mock AI responses presented as live reasoning, or hardcoded success states exist. All displayed data reflects real system state.
 
 ---
 
