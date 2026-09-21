@@ -62,7 +62,7 @@ export async function enqueueMutation({ entity_type, entity_id, action, payload 
     entity_id,
     action, // "UPDATE", "CREATE", "DELETE"
     payload,
-    synced: false,
+    synced: 0, // Integer flag 0 = unsynced, 1 = synced
     created_at: Date.now(),
   };
 
@@ -72,10 +72,12 @@ export async function enqueueMutation({ entity_type, entity_id, action, payload 
 
 // Get pending offline mutation count
 export async function getPendingMutationCount() {
-  return await db.mutation_queue.where('synced').equals(false).count();
+  const allMutations = await db.mutation_queue.toArray();
+  return allMutations.filter((m) => m.synced === 0 || m.synced === false).length;
 }
 
 // Read pending queued mutations
 export async function getPendingMutations() {
-  return await db.mutation_queue.where('synced').equals(false).toArray();
+  const allMutations = await db.mutation_queue.toArray();
+  return allMutations.filter((m) => m.synced === 0 || m.synced === false);
 }

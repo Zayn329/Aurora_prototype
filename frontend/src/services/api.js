@@ -44,4 +44,9 @@ export const api = {
   // Disruptions & Impact Analysis
   simulateDisruption: (disruptionData) =>
     fetchJson('/api/v1/disruptions', { method: 'POST', body: JSON.stringify(disruptionData) }),
+
+  // Synchronization
+  pushSyncOperations: (syncPayload) =>
+    fetchJson('/api/v1/sync/push', { method: 'POST', body: JSON.stringify(syncPayload) }),
+  pullAuthoritativeState: () => fetchJson('/api/v1/sync/pull'),
 };

@@ -1,121 +1,202 @@
-import { useState, useEffect } from 'react'
-import { Shield, Activity, Wifi, WifiOff, AlertTriangle } from 'lucide-react'
+import React, { useState } from 'react';
+import { Shield, LayoutDashboard, Package, AlertOctagon, GitBranch, RotateCcw } from 'lucide-react';
+import { OperationalStateProvider, useOperationalState } from './context/OperationalStateContext';
+import { SyncProvider, useSync } from './context/SyncContext';
+import ConnectionPill from './components/ConnectionPill';
+import OperationalOverview from './components/OperationalOverview';
+import CargoTracker from './components/CargoTracker';
+import DisruptionSimulator from './components/DisruptionSimulator';
+import ImpactDisplay from './components/ImpactDisplay';
+import DependencyGraph from './components/DependencyGraph';
 
-export default function App() {
-  const [healthStatus, setHealthStatus] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+function CommandPlatformContent() {
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'cargo' | 'disruption' | 'graph'
+  const [selectedCargo, setSelectedCargo] = useState(null);
+  const [simulationLoading, setSimulationLoading] = useState(false);
 
-  useEffect(() => {
-    fetch('http://localhost:8000/health')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`)
-        }
-        return res.json()
-      })
-      .then((data) => {
-        setHealthStatus(data)
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error('Failed to connect to backend health check:', err)
-        setError(err.message)
-        setLoading(false)
-      })
-  }, [])
+  const {
+    isOnline,
+    isCheckingHealth,
+    hasLocalData,
+    pendingQueueCount,
+    missions,
+    cargoList,
+    impactSet,
+    loading,
+    error,
+    simulateDisruption,
+    resetSystemState,
+  } = useOperationalState();
+
+  const { isSyncing } = useSync();
+
+  const handleSelectDisruption = (cargoItem) => {
+    setSelectedCargo(cargoItem);
+    setActiveTab('disruption');
+  };
+
+  const handleSimulateDisruption = async (disruptionPayload) => {
+    setSimulationLoading(true);
+    try {
+      await simulateDisruption(disruptionPayload);
+      setActiveTab('disruption');
+    } catch (err) {
+      console.error('Disruption simulation error:', err);
+      alert(`Simulation Error: ${err.message}`);
+    } finally {
+      setSimulationLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    if (window.confirm('Reset central SQLite database and clear local IndexedDB replica?')) {
+      await resetSystemState();
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
-      <header className="border-b border-slate-800 bg-slate-900/50 px-6 py-4 flex items-center justify-between backdrop-blur">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+      {/* Top Command Bar */}
+      <header className="border-b border-slate-800 bg-slate-900/60 px-6 py-4 flex items-center justify-between backdrop-blur sticky top-0 z-50">
         <div className="flex items-center space-x-3">
-          <Shield className="h-8 w-8 text-cyan-400" />
+          <Shield className="h-8 w-8 text-cyan-400 shrink-0" />
           <div>
-            <h1 className="text-xl font-bold tracking-wider text-slate-100">AURORA</h1>
-            <p className="text-xs text-cyan-400 font-mono uppercase tracking-widest">
+            <h1 className="text-xl font-bold tracking-wider text-slate-100 font-mono">AURORA</h1>
+            <p className="text-[10px] text-cyan-400 font-mono uppercase tracking-widest">
               Polar Expedition Command Platform
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full border border-slate-700 bg-slate-900 text-xs font-mono">
-          {healthStatus?.status === 'healthy' ? (
-            <>
-              <Wifi className="h-4 w-4 text-emerald-400" />
-              <span className="text-emerald-400 font-semibold">BACKEND CONNECTED</span>
-            </>
-          ) : (
-            <>
-              <WifiOff className="h-4 w-4 text-amber-400" />
-              <span className="text-amber-400 font-semibold">DISCONNECTED / DEGRADED</span>
-            </>
+        <div className="flex items-center space-x-4">
+          {isOnline && (
+            <button
+              onClick={handleReset}
+              className="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-xs flex items-center space-x-1.5 transition"
+              title="Reset SQLite database to initial seed dataset"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>Reset Seed State</span>
+            </button>
           )}
+          <ConnectionPill
+            isOnline={isOnline}
+            isCheckingHealth={isCheckingHealth || isSyncing}
+            pendingQueueCount={pendingQueueCount}
+          />
         </div>
       </header>
 
-      <main className="flex-1 p-8 max-w-5xl mx-auto w-full">
-        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-6 shadow-2xl backdrop-blur">
-          <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-800">
-            <div className="flex items-center space-x-3">
-              <Activity className="h-6 w-6 text-cyan-400" />
-              <h2 className="text-lg font-semibold text-slate-200">
-                System Status
-              </h2>
-            </div>
-            <span className="text-xs font-mono text-slate-500">SIH MVP Core Setup</span>
+      {/* Navigation Tabs */}
+      <nav className="border-b border-slate-800 bg-slate-900/40 px-6 flex space-x-1 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`px-4 py-3 text-xs font-mono uppercase font-semibold flex items-center space-x-2 border-b-2 transition ${
+            activeTab === 'overview'
+              ? 'border-cyan-400 text-cyan-400 bg-cyan-950/20'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          <span>Operational Overview</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('cargo')}
+          className={`px-4 py-3 text-xs font-mono uppercase font-semibold flex items-center space-x-2 border-b-2 transition ${
+            activeTab === 'cargo'
+              ? 'border-cyan-400 text-cyan-400 bg-cyan-950/20'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <Package className="h-4 w-4" />
+          <span>Cargo Tracker</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('disruption')}
+          className={`px-4 py-3 text-xs font-mono uppercase font-semibold flex items-center space-x-2 border-b-2 transition ${
+            activeTab === 'disruption'
+              ? 'border-cyan-400 text-cyan-400 bg-cyan-950/20'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <AlertOctagon className="h-4 w-4" />
+          <span>Disruption Simulator</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('graph')}
+          className={`px-4 py-3 text-xs font-mono uppercase font-semibold flex items-center space-x-2 border-b-2 transition ${
+            activeTab === 'graph'
+              ? 'border-cyan-400 text-cyan-400 bg-cyan-950/20'
+              : 'border-transparent text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          <GitBranch className="h-4 w-4" />
+          <span>Dependency DAG</span>
+        </button>
+      </nav>
+
+      {/* Main View Container */}
+      <main className="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
+        {loading ? (
+          <div className="flex items-center justify-center p-16 text-slate-400 font-mono text-sm space-x-3">
+            <div className="animate-spin h-5 w-5 border-2 border-cyan-400 border-t-transparent rounded-full"></div>
+            <span>Loading Operational State (Backend / IndexedDB Replica)...</span>
           </div>
+        ) : error && !hasLocalData ? (
+          <div className="bg-rose-950/40 border border-rose-800 rounded-xl p-6 text-center max-w-xl mx-auto space-y-3">
+            <div className="text-rose-400 font-bold font-mono text-base">Backend API & Local Replica Unavailable</div>
+            <p className="text-xs text-rose-300 font-mono">{error}</p>
+          </div>
+        ) : (
+          <>
+            {activeTab === 'overview' && (
+              <OperationalOverview
+                missions={missions}
+                cargoList={cargoList}
+                onSelectDisruption={handleSelectDisruption}
+              />
+            )}
 
-          {loading && (
-            <div className="flex items-center space-x-3 text-slate-400 font-mono text-sm py-8">
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-cyan-400 border-t-transparent"></div>
-              <span>Connecting to Aurora Command Core (http://localhost:8000/health)...</span>
-            </div>
-          )}
+            {activeTab === 'cargo' && (
+              <CargoTracker onSelectDisruption={handleSelectDisruption} />
+            )}
 
-          {error && (
-            <div className="bg-rose-950/40 border border-rose-800/60 rounded-lg p-4 flex items-start space-x-3">
-              <AlertTriangle className="h-5 w-5 text-rose-400 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-semibold text-rose-300">Backend Connection Warning</h3>
-                <p className="text-xs text-rose-400/90 font-mono mt-1">
-                  Failed to fetch backend status: {error}
-                </p>
+            {activeTab === 'disruption' && (
+              <div className="space-y-6">
+                <DisruptionSimulator
+                  cargoList={cargoList}
+                  selectedCargo={selectedCargo}
+                  onSubmitDisruption={handleSimulateDisruption}
+                  loading={simulationLoading}
+                />
+                <ImpactDisplay impactSet={impactSet} />
               </div>
-            </div>
-          )}
+            )}
 
-          {healthStatus && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-lg">
-                  <div className="text-xs text-slate-400 uppercase tracking-wider font-mono">Service Status</div>
-                  <div className="text-emerald-400 font-bold font-mono text-lg mt-1 uppercase">
-                    {healthStatus.status}
-                  </div>
-                </div>
-
-                <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-lg">
-                  <div className="text-xs text-slate-400 uppercase tracking-wider font-mono">Backend Ident</div>
-                  <div className="text-cyan-300 font-bold font-mono text-lg mt-1">
-                    {healthStatus.service}
-                  </div>
-                </div>
-
-                <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-lg">
-                  <div className="text-xs text-slate-400 uppercase tracking-wider font-mono">Operational Mode</div>
-                  <div className="text-slate-200 font-mono text-sm mt-1">
-                    {healthStatus.mode}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+            {activeTab === 'graph' && (
+              <DependencyGraph impactSet={impactSet} />
+            )}
+          </>
+        )}
       </main>
 
+      {/* Footer */}
       <footer className="border-t border-slate-800 py-4 px-6 text-center text-xs font-mono text-slate-500">
-        Aurora Command Platform &bull; Offline-First Architecture
+        Aurora Command Platform &bull; Transport-Agnostic Synchronization & IndexedDB Client Replica
       </footer>
     </div>
-  )
+  );
+}
+
+export default function App() {
+  return (
+    <OperationalStateProvider>
+      <SyncProvider>
+        <CommandPlatformContent />
+      </SyncProvider>
+    </OperationalStateProvider>
+  );
 }
