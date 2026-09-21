@@ -4,7 +4,7 @@
 
 ## 1. Architecture Overview
 
-Aurora is designed as a **Modular Monolith with an Offline-First Local State Engine and an Online AI Enhancement Gateway**.
+Aurora is designed as a **Modular Monolith with an Offline-First Local State Engine, Client-Side Browser Replicas, and an Online AI Enhancement Gateway**.
 
 The primary architectural goal is absolute operational resilience: the command platform must remain authoritative, functional, and fully capable of constraint evaluation, dependency tracking, and emergency decision-making even when completely disconnected from the Internet, cloud servers, or AI LLM services.
 
@@ -15,18 +15,22 @@ The primary architectural goal is absolute operational resilience: the command p
 ┌────────────────────────────────────────────────────────────────────────┐
 │                   React + Vite Responsive Frontend                     │
 │               (Laptop / Tablet / Mobile Web Application)                │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ HTTP / REST / WebSockets
+│ ┌────────────────────────────────────────────────────────────────────┐ │
+│ │  IndexedDB Browser Replica (Dexie.js) + Local Mutation Queue       │ │
+│ └──────────────────────────────────┬─────────────────────────────────┘ │
+└───────────────────────────────────┼────────────────────────────────────┘
+                                    │ HTTP / REST / WebSockets / Offline Replay
 ┌───────────────────────────────────▼────────────────────────────────────┐
 │                       FastAPI Backend Service                          │
 │ ┌────────────────────────────────────────────────────────────────────┐ │
 │ │                  Deterministic Operational Engine                  │ │
-│ │  - State Mutation Manager    - Dependency Graph Solver (NetworkX)  │ │
+│ │  - State Mutation Manager    - DAG Dependency Solver (NetworkX)    │ │
 │ │  - Constraint Evaluator      - Baseline Emergency Triage Engine    │ │
 │ └──────────────────────────────────┬─────────────────────────────────┘ │
 │                                    │                                   │
 │ ┌──────────────────────────────────▼─────────────────────────────────┐ │
-│ │               Local Persistence Layer (SQLite + SQLModel)          │ │
+│ │     Central Operational Persistence (SQLite + SQLModel)            │ │
+│ │              (Global Authoritative State Store)                    │ │
 │ └────────────────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────────┘
 ```
@@ -63,38 +67,39 @@ The primary architectural goal is absolute operational resilience: the command p
                                        └────────────────────────┘
 ```
 
-#### 3. Multi-Device Peer-to-Peer & BLE Sync Topology
+#### 3. Multi-Device Peer-to-Peer & Sync Transport Topology
 ```text
-┌─────────────────────────┐                 ┌─────────────────────────┐
-│     Field Device A      │                 │     Field Device B      │
-│  (React PWA / Mobile)   │                 │  (Tablet / Commander)   │
-└────────────┬────────────┘                 └────────────▲────────────┘
-             │                                           │
-             │ BLE Sync Packet / Store-and-Forward Payload│
-             ▼                                           │
-┌────────────────────────────────────────────────────────┴────────────┐
-│                      BLE Gateway / Relay Node                       │
-│     (Web Bluetooth API / Node-Python Device Companion Bridge)       │
-└────────────────────────────┬────────────────────────────────────────┘
-                             │ Local Sync Protocol / HTTP Replay
-                             ▼
-┌─────────────────────────────────────────────────────────────────────┐
-│                 Central Base Station FastAPI Backend                │
-│             (Merged Operational State & Audit Engine)               │
-└─────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                  Application Sync Protocol Engine                      │
+│        (ChangeRecords, Monotonic Sequence Numbers, Vector Clock)       │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+    ┌───────────────────────────────┴───────────────────────────────┐
+    │                                                               │
+    ▼                                                               ▼
+┌───────────────────────────────────────┐       ┌───────────────────────────────────────┐
+│ BLE Transport Adapter                 │       ┌ Local Wi-Fi / HTTP Transport Adapter  │
+│ (GATT Service, 512B Chunks, TTL Relay)│       │ (REST Replay, WebSocket Sync Engine)  │
+└──────────────────┬────────────────────┘       └──────────────────┬────────────────────┘
+                   │                                               │
+                   ▼                                               ▼
+┌───────────────────────────────────────────────────────────────────────┐
+│                  Base Station Central Backend                         │
+│   (Deterministically Reconciles Operations -> Authoritative DB)       │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 2. Architecture Principles
 
-1. **State Ownership Principle:** Authoritative state lives strictly in the SQLite relational database. Conversation histories, LLM context windows, and vector indexes are non-authoritative caches or reasoning inputs.
-2. **AI Independence Principle:** The deterministic core (state updates, graph traversal, constraint validation) must execute cleanly without network connectivity, Groq API, LangGraph, RAG, or MCP.
+1. **State Ownership Principle:** Global authoritative operational truth belongs strictly to the Central Backend SQLite relational database. Field devices maintain read-only or staged local replicas in IndexedDB or local SQLite stores. Conversation histories, LLM context windows, and vector indexes are non-authoritative caches or reasoning inputs.
+2. **AI Independence Principle:** The deterministic core (state updates, DAG graph traversal, constraint validation) must execute cleanly without network connectivity, Groq API, LangGraph, RAG, or MCP.
 3. **Advisory AI Boundary:** AI outputs are proposals (`Recommendation` objects). They cannot mutate database entities directly. State changes require explicit human commander authorization (`ApprovedAction`).
 4. **Tool Permission Boundary:** MCP tools are read-only by default. Any state-mutating tool invocation generates a pending approval request rather than executing directly.
 5. **Grounding & Citation Rule:** RAG searches must query real indexed documents in ChromaDB and return traceable source metadata (document, title, section). Fabricated citations are forbidden.
 6. **Structured Output Enforcement:** All LLM responses must be parsed and validated against strict Pydantic schemas before being processed by the application or displayed in the UI.
-7. **Explicit Fallbacks:** When online services (Groq, RAG) are unreachable, the system must explicitly surface a degraded/fallback status in the UI while continuing core operations.
+7. **Explicit Fallbacks:** When online services (Groq, RAG) are unreachable, the system must explicitly surface a degraded/fallback status in the UI while keeping the deterministic core fully operational.
 
 ---
 
@@ -103,16 +108,17 @@ The primary architectural goal is absolute operational resilience: the command p
 | Layer | Selected Technology | Role | Reason for Choice | Architectural Trade-off |
 | :--- | :--- | :--- | :--- | :--- |
 | **Frontend** | React 18 + Vite | SPA User Interface | Fast HMR, lightweight bundle size, universal browser support on desktop/mobile. | Requires client-side state handling for offline caching. |
+| **Client Storage** | IndexedDB (Dexie.js) | Client Browser Replica & Queue | Persists local operational state replica and offline mutation queue directly in browser storage. | Requires periodic sync reconciliation with the backend. |
 | **Styling/UI** | Tailwind CSS + Lucide React | UI Styling & Icons | Rapid UI creation with responsive grid layouts and operational status badges. | Custom CSS utilities needed for complex graph diagrams. |
 | **Backend Framework**| FastAPI (Python 3.11) | REST & WebSocket API | High performance, native async support, automatic OpenAPI schemas, seamless Pydantic integration. | Python async requires care to prevent blocking event loop during graph algorithms. |
-| **Database / ORM** | SQLite + SQLModel | Local Relational Persistence | Zero-configuration, file-based, embeddable, full ACID compliance, native Python object mapping. | Single-writer limit; handled via WAL mode for SIH concurrency needs. |
-| **Dependency Solver**| NetworkX (Python) | Graph Traversal & Impact Solver | In-memory graph algorithms, cycle detection, topological sorting, transitive dependency propagation. | Entire graph loaded into memory; negligible overhead for expedition datasets (<10,000 nodes). |
+| **Authoritative DB** | SQLite + SQLModel | Central Authoritative Store | Zero-configuration, file-based, embeddable, full ACID compliance, native Python object mapping. | Single-writer limit; handled via WAL mode for SIH concurrency needs. |
+| **Dependency Solver**| NetworkX (Python) | DAG Traversal & Cycle Detector | In-memory graph algorithms, DAG cycle enforcement, topological sorting, transitive dependency propagation. | Entire graph loaded into memory; negligible overhead for expedition datasets (<10,000 nodes). |
 | **Agent Framework** | LangGraph (Python) | State-machine Agent Orchestration | Deterministic cyclic state-machine flows, explicit node gates, structured state transitions. | Learning curve over raw LangChain, but provides strict agent execution control. |
 | **LLM Provider** | Groq API (`llama-3.3-70b`) | Online Reasoning & Rescheduling | Industry-leading inference speed (~300 tokens/sec), low latency for real-time decision-support. | Requires internet connectivity; core system must handle API offline state gracefully. |
 | **RAG / Vector Store**| ChromaDB (Local Persistent) | SOP Vector Search & Context Retrieval | Lightweight, embedded vector store running in Python process without external Docker daemon. | SQLite-backed vector storage is ideal for SIH demo, less scalable for multi-terabyte datasets. |
 | **Embeddings** | SentenceTransformers (`all-MiniLM-L6-v2`) | Text Embeddings for SOP Chunks | Runs CPU-locally inside backend process; no external API calls required for embedding generation. | ~80MB model download on initial setup; fast execution once cached. |
 | **Tool Gateway** | FastMCP (Python) | Model Context Protocol Tools | Lightweight implementation of MCP protocol over stdio/HTTP. | Keeps tool schema explicitly separated from LLM prompts. |
-| **BLE Transport** | Web Bluetooth API + Companion Bridge | Device-to-Device Peer Sync | Browser-native BLE access combined with a lightweight Node/Python companion script for background relay. | Browsers restrict background BLE scanning; companion bridge solves relay requirement. |
+| **BLE Transport** | Web Bluetooth API + Companion Bridge | Physical GATT Link Layer | Browser-native BLE access combined with a lightweight Node/Python companion script for background relay. | Browsers restrict background BLE scanning; companion bridge solves relay requirement. |
 
 ---
 
@@ -120,23 +126,23 @@ The primary architectural goal is absolute operational resilience: the command p
 
 The system is decomposed into 17 modular components:
 
-1. **Frontend UI Application (`frontend/`):** React SPA providing situational dashboards, mission controls, cargo views, impact graphs, and approval modals. *Must not depend on backend availability to render cached state.*
-2. **FastAPI API Layer (`backend/api/`):** Exposes REST endpoints and WebSockets for real-time UI updates. *Must not contain domain business logic.*
-3. **Operational State Engine (`backend/core/state.py`):** Handles CRUD and domain validation for missions, cargo, assets, personnel, and conditions. *Must not depend on AI or network.*
-4. **Deterministic Graph Solver (`backend/core/graph.py`):** Builds in-memory NetworkX dependency graphs and computes direct and transitive impact sets. *Must produce 100% reproducible results.*
-5. **Constraint & Resource Evaluator (`backend/core/constraints.py`):** Verifies capacity, temporal windows, and resource supply/demand balances. *Must operate deterministically.*
-6. **Local Operational Store (`backend/persistence/`):** Manages SQLite tables via SQLModel. *Sole source of truth for application state.*
-7. **Sync Queue & Store-and-Forward Engine (`backend/sync/queue.py`):** Tracks uncommitted local state operations and formats sync packets. *Guarantees message idempotency via unique GUIDs.*
-8. **BLE & Connectivity Adapter (`backend/sync/ble_adapter.py`):** Interfaces with Web Bluetooth and local bridge script to send/receive binary sync packets. *Abstracts transport protocol from sync engine.*
-9. **RAG Ingestion & Query Pipeline (`backend/rag/`):** Parses Markdown/PDF SOPs, generates embeddings via `all-MiniLM-L6-v2`, and queries ChromaDB. *Must return source citations.*
-10. **Vector Store (`ChromaDB local`):** Persists embedded document chunks. *Must operate locally on base station server.*
-11. **Mission Rescheduling Agent (`backend/ai/rescheduling_agent.py`):** LangGraph agent that computes alternative schedule windows for impacted missions. *Produces non-binding proposals.*
-12. **Emergency Resource Agent (`backend/ai/emergency_agent.py`):** LangGraph agent that matches emergency requirements to nearby available assets/personnel. *Produces non-binding proposals.*
-13. **AI Orchestrator (`backend/ai/orchestrator.py`):** Routes requests to LangGraph workflows or offline fallback rule engines based on connectivity.
-14. **MCP Tool Gateway (`backend/mcp/gateway.py`):** FastMCP server exposing read-only state inspectors and proposal generators to AI agents.
-15. **Human Approval Gate (`backend/core/approval.py`):** Validates, records, and applies Commander decisions (`Approve`, `Modify`, `Reject`). *Sole entry point for applying AI recommendations to state.*
-16. **Demo Seed Data Manager (`backend/persistence/seed.py`):** Populates synthetic expedition datasets for repeatable demonstration scenarios.
-17. **Local Device Bridge (`scripts/device_bridge.py`):** Lightweight Python script providing background BLE GATT server/client capabilities for multi-device relay.
+1. **Frontend UI Application (`frontend/`):** React SPA providing situational dashboards, mission controls, cargo views, impact graphs, and approval modals. *Interacts directly with local IndexedDB when offline.*
+2. **Client Browser Replica (`frontend/src/context/IndexedDBStore.js`):** Local browser database storing entity replicas and a `mutation_queue` for offline PWA operations.
+3. **FastAPI API Layer (`backend/api/`):** Exposes REST endpoints and WebSockets for real-time UI updates. *Must not contain domain business logic.*
+4. **Operational State Engine (`backend/core/state.py`):** Handles CRUD and domain validation for missions, cargo, assets, personnel, and conditions. *Must not depend on AI or network.*
+5. **Deterministic DAG Solver (`backend/core/graph.py`):** Builds in-memory NetworkX directed acyclic graphs, enforces cycle prevention, and computes direct and transitive impact sets. *Must produce 100% reproducible results.*
+6. **Constraint & Resource Evaluator (`backend/core/constraints.py`):** Verifies capacity, temporal windows, and resource supply/demand balances. *Must operate deterministically.*
+7. **Global Authoritative Store (`backend/persistence/`):** Manages central SQLite tables via SQLModel. *Sole global source of truth for application state.*
+8. **Application Sync Protocol Engine (`backend/sync/protocol.py`):** Transport-agnostic engine that sequences operations, handles deduplication, and performs field-level Last-Write-Wins (LWW) state merging.
+9. **BLE Transport Adapter (`backend/sync/ble_adapter.py`):** Physical/link layer gateway that handles GATT characteristic connections, 512-byte payload chunking, TTL hop counts, and store-and-forward buffer management.
+10. **RAG Ingestion & Query Pipeline (`backend/rag/`):** Parses Markdown/PDF SOPs, generates embeddings via `all-MiniLM-L6-v2`, and queries ChromaDB. *Must return source citations.*
+11. **Vector Store (`ChromaDB local`):** Persists embedded document chunks. *Must operate locally on base station server.*
+12. **Mission Rescheduling Agent (`backend/ai/rescheduling_agent.py`):** LangGraph agent that computes alternative schedule windows for impacted missions. *Produces non-binding proposals.*
+13. **Emergency Resource Agent (`backend/ai/emergency_agent.py`):** LangGraph agent that matches emergency requirements to nearby available assets/personnel. *Produces non-binding proposals.*
+14. **AI Orchestrator (`backend/ai/orchestrator.py`):** Routes requests to LangGraph workflows or offline fallback rule engines based on connectivity.
+15. **MCP Tool Gateway (`backend/mcp/gateway.py`):** FastMCP server exposing read-only state inspectors and proposal generators to AI agents.
+16. **Human Approval Gate (`backend/core/approval.py`):** Validates, records, and applies Commander decisions (`Approve`, `Modify`, `Reject`). *Sole entry point for applying AI recommendations to state.*
+17. **Demo Seed Data Manager (`backend/persistence/seed.py`):** Populates synthetic expedition datasets for repeatable demonstration scenarios.
 
 ---
 
@@ -157,7 +163,7 @@ backend/
 ├── core/                       # Deterministic Domain Layer (Pure Python, No AI Dependencies)
 │   ├── models.py               # Domain entities & SQLModel definitions
 │   ├── state_engine.py         # Authoritative state transitions & validation
-│   ├── graph_solver.py         # NetworkX dependency traversal & impact solver
+│   ├── graph_solver.py         # NetworkX DAG traversal, cycle detection & impact solver
 │   ├── constraint_engine.py   # Capacity, fuel, power, and temporal solvers
 │   └── approval_engine.py      # HITL validation and approved transaction applier
 ├── ai/                         # Online AI Enhancement Layer (LangGraph & Groq)
@@ -172,63 +178,58 @@ backend/
 │   ├── server.py               # FastMCP tool server instantiation
 │   └── tools.py                # Read-only state inspection & tool wrappers
 ├── sync/                       # Offline Peer-to-Peer & Synchronization Engine
-│   ├── queue.py                # Change-record operation queue
-│   ├── merger.py               # Deterministic CRDT/LWW state reconciliation engine
-│   └── ble_adapter.py          # Device transport interface
+│   ├── protocol.py             # Transport-agnostic application sync protocol & LWW merger
+│   ├── ble_adapter.py          # Physical BLE GATT transport layer adapter
+│   └── http_adapter.py         # REST/WebSocket transport layer adapter
 └── persistence/                # Database & Storage Layer
     ├── database.py             # SQLite connection pooling & WAL initialization
     └── seed.py                 # Synthetic polar expedition dataset populator
 ```
 
-### Layer Boundary Rules
-- `api/` calls `core/`, `ai/`, `rag/`, or `sync/`. It contains ZERO business logic.
-- `core/` has ZERO imports from `ai/`, `rag/`, `mcp/`, or `langgraph`.
-- `ai/` reads state via `core/` or `mcp/` tools and returns Pydantic proposals.
-- `persistence/` handles database session lifecycles.
-
 ---
 
-## 6. Unified Operational State
+## 6. Authoritative State vs. Local Device Replica Semantics
 
-The authoritative operational state is stored in SQLite and modeled via SQLModel (Pydantic + SQLAlchemy).
-
-### Core Entities & Relationships
+To eliminate state ambiguity in an offline-first multi-device deployment, Aurora explicitly separates global authoritative state from local device replicas:
 
 ```text
-  ┌──────────────┐         ┌──────────────┐         ┌──────────────┐
-  │   Station    │1     N │   Personnel  │1     N │    Asset     │
-  │  (Outpost)   ├─────────►  (People)    ├─────────►  (Vehicle/   │
-  └──────┬───────┘         └──────────────┘         │  Generator)  │
-         │1                                         └──────┬───────┘
-         │N                                                │1
-  ┌──────▼───────┐         ┌──────────────┐                │N
-  │   Mission    │1     N │ Cargo Item   │                │
-  │ (Operation)  ├─────────► (Fuel/Rations├────────────────┘
-  └──────┬───────┘         └──────────────┘
-         │1
-         │N
-  ┌──────▼───────┐
-  │ Dependency   │ (Prerequisite links: Mission->Mission, Mission->Cargo, Mission->Asset)
-  └──────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                   Global Authoritative Operational State               │
+│                  (Base Station Central SQLite Database)                │
+│  - Sole global source of truth                                         │
+│  - Holds master entity revisions, global audit log, and approved state  │
+└───────────────────────────────────▲────────────────────────────────────┘
+                                    │
+                                    │ Sync Protocol (LWW Merge)
+                                    │
+┌───────────────────────────────────┴────────────────────────────────────┐
+│                      Local Device Replica                              │
+│       (Field Laptop / Tablet Browser IndexedDB or Local SQLite)        │
+│  - Staged read-only / mutable local copy of operational state          │
+│  - Supports optimistic UI updates and local impact simulation offline  │
+│  - Queues uncommitted mutations in local `mutation_queue`              │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Revision & Versioning Scheme
-Every entity includes:
-- `id`: UUIDv4 string
-- `revision`: Incrementing integer (monotonically increasing)
-- `updated_at`: UTC ISO-8601 timestamp
-- `updated_by_device`: String identifier of device initiating mutation
-
-Mutations increment `revision` and update `updated_at`. When synchronizing, the higher revision or later UTC timestamp wins for conflicting fields (Last-Write-Wins with deterministic tie-breaking).
+### Semantics
+1. **Reads:** The local React UI reads immediately from its IndexedDB client replica or local SQLite instance.
+2. **Local Mutations:** Actions taken on a field device update the local replica immediately (optimistic update) and append an immutable `ChangeRecord` to `mutation_queue`.
+3. **Reconciliation:** When connectivity to the base station returns, queued operations are transmitted via the Sync Protocol. The central backend validates constraints against Global Authoritative State and applies updates. Upon confirmation, field device replicas refresh their state to match the master database.
 
 ---
 
-## 7. Deterministic Core
+## 7. Deterministic Core & Mandatory DAG Rules
 
 The deterministic core (`backend/core/`) is 100% independent of AI and external networks.
 
+### Mandatory Directed Acyclic Graph (DAG) Rule
+- **Graph Constraint:** The dependency graph MUST be a Directed Acyclic Graph (DAG).
+- **Cycle Prevention:** Cyclic dependencies (e.g., Mission A requires Cargo X → Cargo X requires Mission B → Mission B requires Mission A) represent invalid operational deadlocks.
+- **Enforcement Engine:** When any dependency link is added or modified, `backend/core/graph_solver.py` executes NetworkX cycle detection (`nx.simple_cycles(G)`).
+- **Behavior on Cycle:** If a cycle is detected, the transaction is rejected immediately with `400 Bad Request: CyclicDependencyError`, preventing invalid state persistence.
+
 ### Core Calculations & Algorithms
-1. **Dependency Graph Traversal:** Converts database entities and dependency constraints into a directed acyclic graph (DAG) using NetworkX.
+1. **DAG Traversal:** Converts database entities and dependency constraints into a NetworkX DAG.
 2. **Impact Analysis Algorithm:**
    - Input: Disruption Event (e.g., `Cargo-Fuel-01` delayed by 24h).
    - Step 1: Mark target entity as `IMPACTED`.
@@ -242,7 +243,7 @@ The deterministic core (`backend/core/`) is 100% independent of AI and external 
 
 ## 8. Dependency Graph and Impact Analysis
 
-### Canonical Example Graph
+### Canonical Example Graph (DAG)
 - **Nodes:**
   - `Cargo: Cargo-Fuel-01` (Status: Delayed 24h)
   - `Mission: Mission-Alpha` (Requires `Cargo-Fuel-01` & `Asset: Snowcat-A`)
@@ -254,16 +255,16 @@ The deterministic core (`backend/core/`) is 100% independent of AI and external 
 [Disruption Event Received]
   Cargo-Fuel-01 -> Status: DELAYED (New ETA: T+24h)
 
-[Graph Traversal Step 1: Direct Impact]
+[DAG Traversal Step 1: Direct Impact]
   Edge: Cargo-Fuel-01 ---> Mission-Alpha (Type: REQUIRED_CARGO)
   Check: Mission-Alpha Start Time (T+12h) < Cargo-Fuel-01 ETA (T+24h)
   Result: Mission-Alpha -> DIRECTLY_IMPACTED (Broken Prerequisite: Fuel deficit)
 
-[Graph Traversal Step 2: Transitive Impact]
+[DAG Traversal Step 2: Transitive Impact]
   Edge: Mission-Alpha ---> Mission-Beta (Type: PREREQUISITE_MISSION)
   Result: Mission-Beta -> TRANSITIVELY_IMPACTED (Prerequisite Mission-Alpha delayed)
 
-[Graph Traversal Step 3: Asset Impact]
+[DAG Traversal Step 3: Asset Impact]
   Edge: Mission-Alpha ---> Snowcat-A (Type: ASSIGNED_ASSET)
   Result: Snowcat-A schedule locked in delayed window.
 
@@ -283,80 +284,89 @@ The deterministic core (`backend/core/`) is 100% independent of AI and external 
 
 | System Capability | Offline Mode (Local Base / Field Device) | Online Mode (Cloud / Satellite Active) |
 | :--- | :--- | :--- |
-| **Inspect Operational State** | Full Access (Local SQLite) | Full Access (Synced State) |
-| **Create/Modify Missions & Cargo**| Full Access (Queued for Sync) | Full Access (Immediate Sync) |
-| **Dependency & Impact Traversal** | Full Access (Deterministic NetworkX) | Full Access (Deterministic NetworkX) |
-| **Emergency Resource Triage** | Full Access (Rule-Based Solver) | Enriched with AI SOP Guidelines |
+| **Inspect Operational State** | Deterministic Core Fully Operational (IndexedDB / Local SQLite) | Deterministic Core Fully Operational (Synced Master) |
+| **Create/Modify Missions & Cargo**| Deterministic Core Fully Operational (Queued in Mutation Store) | Deterministic Core Fully Operational (Immediate Sync) |
+| **Dependency & Impact Traversal** | Deterministic Core Fully Operational (NetworkX DAG Engine) | Deterministic Core Fully Operational (NetworkX DAG Engine) |
+| **Emergency Resource Triage** | Deterministic Core Fully Operational (Rule-Based Solver) | Enriched with AI SOP Guidelines |
 | **Mission Rescheduling** | Baseline Rule Engine (Shift Windows) | LangGraph + Groq Agent Suggestions |
 | **SOP Document Querying** | Local Text Search (Cached Docs) | ChromaDB Vector RAG Search & Citations |
 | **Multi-Device Sync** | Local BLE / Peer Store-and-Forward | Real-Time REST / WebSocket Refresh |
 
-The UI displays a prominent status pill: **OFFLINE MODE (BASELINE CORE ACTIVE)** or **ONLINE (AI ENHANCED)**.
+The UI displays a prominent status pill: **OFFLINE MODE (DETERMINISTIC CORE FULLY OPERATIONAL)** or **ONLINE (AI ENHANCED)**.
 
 ---
 
-## 10. Multi-Device Synchronization
+## 10. Multi-Device Synchronization & Conflict Resolution Model
 
-### Operational Log Sync Engine
-Multi-device sync relies on a deterministic **Operation Log Replication** pattern:
+### Application Sync Protocol Engine (`backend/sync/protocol.py`)
+Multi-device sync relies on a transport-agnostic, **Deterministic Sequence & Field-Revision Last-Write-Wins (LWW) Conflict Model**:
 
-1. When a user creates/updates an entity on Device A while offline, a JSON `ChangeRecord` is generated:
 ```json
 {
   "op_id": "op_987654321_device_A",
   "device_id": "device_A",
+  "device_seq_num": 104,
   "timestamp_utc": "2026-09-21T01:45:00Z",
   "entity_type": "cargo",
   "entity_id": "cargo_fuel_01",
   "action": "UPDATE",
   "payload": {"status": "DELAYED", "delay_hours": 24},
-  "revision": 3
+  "field_revisions": {"status": 3, "delay_hours": 3}
 }
 ```
-2. The record is appended to Device A's local SQLite `sync_queue` table with `synced = False`.
-3. When Device A connects to Device B (via BLE or Local Network), Device A transmits un-synced `ChangeRecord` items.
-4. Device B processes incoming records through `SyncMerger`:
-   - Checks `op_id` in local `processed_ops` table. If present, ignores (Deduplication / Idempotency).
-   - If `op_id` is new, compares entity `revision` and `timestamp_utc` against local database state.
-   - Applies state update if incoming `revision > local_revision`.
-   - Marks `op_id` as processed and forwards payload to central backend when network returns.
+
+### Deterministic Conflict Resolution Rules
+When the `SyncMerger` processes an incoming operation against existing state:
+1. **Deduplication Check:** Checks `op_id` against `processed_ops` table. If present, drops payload immediately (Idempotent replay protection).
+2. **Field Revision Comparison:** For each field in `payload`:
+   - If incoming `field_revision > local_field_revision` → Accept field update.
+   - If `field_revision == local_field_revision`:
+     - Compare `timestamp_utc`: Later timestamp wins.
+     - If timestamps are identical: Lexicographically smaller `device_id` string wins.
+3. **Deterministic Convergence:** These rules guarantee that all nodes processing the same set of operations converge to the exact same state, regardless of arrival order, without requiring complex distributed consensus or CRDT engines.
 
 ---
 
-## 11. BLE / Mesh / Store-and-Forward Architecture
+## 11. Separation of Sync Protocol from BLE Transport Adapter
 
-### Browser BLE Limitation & Companion Bridge Solution
-Standard web browsers running React SPAs restrict raw background Bluetooth mesh networking. Aurora solves this via a **Dual-Layer BLE Architecture**:
-
-1. **Browser Layer (Web Bluetooth API):** Used in the React UI for explicit point-to-point scanning and connecting to nearby polar field beacons or companion bridges.
-2. **Device Companion Bridge (`scripts/device_bridge.py`):** A lightweight background Python daemon (using `bleak`) running on field laptops/Raspberry Pi relay nodes. It advertises an **Aurora GATT Sync Service** (`UUID: 6E400001-B5A3-F393-E0A9-E50E24DCCA9E`).
-
-### BLE Packet Protocol Specification
-Sync payloads are chunked into 512-byte GATT Characteristic packets:
+To ensure transport independence, the architecture strictly separates the **Application Sync Protocol Layer** from the **Physical Transport Adapter Layer**:
 
 ```text
-┌─────────────────┬──────────────────┬─────────────────┬─────────────────────────────┐
-│ Header (4 bytes)│ Op ID (16 bytes) │ Chunk Index/Total│ Compressed JSON Payload     │
-│ [AUR1]          │ [op_guid_prefix] │ [01/04]         │ [Gzip binary chunk data...] │
-└─────────────────┴──────────────────┴─────────────────┴─────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│                   Application Sync Protocol Layer                      │
+│                   (`backend/sync/protocol.py`)                         │
+│  - Formats ChangeRecord batches and handles sequence numbers           │
+│  - Enforces field-level LWW conflict resolution and deduplication      │
+│  - Agnostic of hardware transport (HTTP, BLE, Serial, File export)     │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │ Standard Payload Interface
+                                    │
+┌───────────────────────────────────┴────────────────────────────────────┐
+│                     Physical Transport Adapter                         │
+│                  (`backend/sync/ble_adapter.py`)                       │
+│  - Encapsulates Web Bluetooth / GATT Characteristic communication      │
+│  - Manages 512-byte MTU packet chunking, headers, and CRC checksums   │
+│  - Implements store-and-forward buffer queues and TTL hop decrements   │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Hop Count / TTL:** Packets include `ttl = 3`. Decremented at each relay hop to prevent infinite mesh flooding.
-- **Store-and-Forward:** If a relay node receives a packet but cannot reach the base station, it stores the packet in local disk queue until base station GATT service is detected.
+### BLE GATT Packet Protocol
+The `ble_adapter` chunks sync payloads into 512-byte packets:
+```text
+┌─────────────────┬──────────────────┬─────────────────┬─────────────────────────────┐
+│ Header (4 bytes)│ Op ID (16 bytes) │ Chunk Index/Total│ Compressed Binary Chunk     │
+│ [AUR1]          │ [op_guid_prefix] │ [01/04]         │ [Gzip JSON payload chunk...]│
+└─────────────────┴──────────────────┴─────────────────┴─────────────────────────────┘
+```
+- **Store-and-Forward Relay:** Companion bridge scripts (`scripts/device_bridge.py`) store chunks on local disk with `ttl = 3`. Decremented per hop. Automatically forwarded when the Central Base Station BLE GATT service comes into range.
 
 ---
 
 ## 12. Synchronization and Backend Consistency
 
-Central backend reconciliation follows deterministic rules:
-
-1. **Transaction Ordering:** Sync operations are sorted chronologically by `timestamp_utc`.
-2. **Conflict Resolution Strategy (Last-Write-Wins with Deterministic Tie-Breaker):**
-   - Higher `revision` number always wins.
-   - If revisions are equal, later `timestamp_utc` wins.
-   - If timestamps are identical, lexicographically smaller `device_id` string wins.
-3. **Rejection & Validation:** Incoming changes that violate domain constraints (e.g., negative cargo quantity) are rejected and logged in `sync_failures` with error details for Commander inspection.
-4. **No AI Conflict Resolution:** LLMs are NEVER used to resolve database merge conflicts.
+1. **Authoritative Master Validation:** Incoming peer operations applied at the central backend are re-validated against domain constraints (e.g., verifying mission schedule bounds).
+2. **Rejected Changes:** Operations violating core rules are marked `REJECTED` in `sync_failures` log with detailed reasons for Commander audit.
+3. **Re-synchronization:** When a field device connects, it receives an authoritative state snapshot to overwrite any locally rejected mutations.
 
 ---
 
@@ -537,7 +547,7 @@ Every approval action logs a immutable audit record: `ApprovalAudit(id, recommen
 
 1. **Trigger:** Commander clicks "Emergency Alert" or system ingests critical asset failure.
 2. **Offline Baseline Triage:**
-   - Scans SQLite for assets with `status = OPERATIONAL` within immediate distance radius.
+   - Scans SQLite/IndexedDB for assets with `status = OPERATIONAL` within immediate distance radius.
    - Filters personnel with specialty `Medical` or `Search & Rescue`.
    - Displays baseline dispatch list within <50ms.
 3. **Online AI Enrichment:**
@@ -573,7 +583,7 @@ FastAPI exposes RESTful routes under `/api/v1`:
 
 ## 20. Frontend Architecture
 
-The React 18 application is structured into clear view modules:
+The React 18 application is structured into clear view modules with IndexedDB client-side replica support:
 
 ```text
 frontend/src/
@@ -596,9 +606,10 @@ frontend/src/
 │       ├── ProposalCard.jsx        # AI Proposal Display with RAG Citations
 │       └── DecisionHistory.jsx     # Audit Trail of Approved/Rejected Actions
 ├── context/
-│   ├── OperationalStateContext.jsx # Local State Cache & Offline Persistence Provider
-│   └── SyncContext.jsx            # BLE & Network Queue Sync State
+│   ├── OperationalStateContext.jsx # IndexedDB Replica & Offline State Provider
+│   └── SyncContext.jsx            # Transport Sync & Mutation Queue State
 └── services/
+    ├── indexedDBStore.js          # Dexie.js Client Database & Mutation Queue
     ├── api.js                      # Axios HTTP Client with Offline Queue Fallback
     └── bleService.js               # Web Bluetooth API Interface
 ```
@@ -608,7 +619,7 @@ frontend/src/
 ## 21. Mobile / Responsive Architecture
 
 - **Viewport Fluidity:** Responsive layout using Tailwind CSS flex/grid system, scaling seamlessly from mobile screens (375px) to tablet (768px) and dual-monitor command desks (1920px).
-- **Progressive Web App (PWA):** Service worker caches static assets and frontend bundles locally. Application opens and renders cached operational state even in airplane mode.
+- **Progressive Web App (PWA) & IndexedDB:** Service worker caches static assets. Dexie.js/IndexedDB stores local entity replicas. The app renders operational state fully offline even in airplane mode.
 - **Mobile Touch Targets:** Action buttons (e.g., `Approve`, `Simulate Disruption`) use minimum 48px touch padding for field operations wearing thermal gloves.
 
 ---
@@ -625,17 +636,17 @@ frontend/src/
 
 | Failure Scenario | System Behavior & Fallback | UI Representation |
 | :--- | :--- | :--- |
-| **Internet Lost** | Groq API & online RAG disabled. Core NetworkX impact analysis continues working 100% locally. | Banner: `OFFLINE MODE (BASELINE CORE ACTIVE)` |
+| **Internet Lost** | Groq API & online RAG disabled. Deterministic core fully operational 100% locally. | Banner: `OFFLINE MODE (DETERMINISTIC CORE FULLY OPERATIONAL)` |
 | **Groq API Timeout / Error** | LangGraph agent catches exception and invokes deterministic rule fallback (shifts mission start date by disruption duration). | Notice: `AI Assistant Unavailable. Baseline Reschedule Fallback Provided.` |
 | **ChromaDB Vector Error** | Agent proceeds with rescheduling using operational state only, omitting RAG manual citations. | Notice: `SOP Manual Search Offline. Recommendation Based on Core State.` |
-| **BLE Connection Drop** | Sync Engine queues un-transmitted `ChangeRecord` items in SQLite; retries automatically upon reconnection. | Sync Pill: `Sync Queue: 3 Pending Items (Reconnecting...)` |
-| **Invalid State Transition** | State Engine rejects mutation and rolls back SQLite transaction. | Toast: `Invalid Mutation: Dependency Prerequisite Violation.` |
+| **BLE Connection Drop** | Sync Engine queues un-transmitted `ChangeRecord` items in SQLite/IndexedDB; retries automatically upon reconnection. | Sync Pill: `Sync Queue: 3 Pending Items (Reconnecting...)` |
+| **Invalid State Transition / Cycle** | State Engine / DAG Solver rejects mutation and rolls back transaction. | Toast: `Invalid Mutation: Cyclic Dependency or Prerequisite Violation.` |
 
 ---
 
 ## 24. Data Persistence Architecture
 
-### SQLite Relational Database Layout
+### Central SQLite Relational Database Layout
 - SQLite database file located at `backend/aurora_operational.db`.
 - WAL (Write-Ahead Logging) enabled on connection initialization for concurrent read/write support.
 
@@ -681,7 +692,7 @@ The end-to-end demonstration follows this exact reproducible journey:
   Parameters: Status = DELAYED, Delay = 24 Hours. Click "Record Incident".
 
 [Step 3: Deterministic Impact Evaluation]
-  FastAPI receives event -> NetworkX solver computes graph traversal.
+  FastAPI receives event -> NetworkX DAG solver computes graph traversal.
   Result: "Operation Deep Freeze" marked IMPACTED (Fuel ETA exceeds Start Time).
   Downstream "Glacial Survey Beta" marked TRANSITIVELY IMPACTED.
   UI immediately highlights impacted missions in RED with exact delay reasons.
@@ -708,14 +719,14 @@ The end-to-end demonstration follows this exact reproducible journey:
 ### Test Suite Structure (`tests/`)
 
 1. **Deterministic Unit Tests (`tests/test_deterministic_core.py`):**
-   - Tests NetworkX dependency traversal algorithms.
+   - Tests NetworkX DAG dependency traversal and cycle detection algorithms.
    - Verifies direct and transitive impact set output for cargo delays.
    - Asserts that graph traversal output is 100% reproducible over 100 iterations.
 2. **Constraint Solver Tests (`tests/test_constraints.py`):**
    - Validates resource capacity deficit calculations and temporal window overlaps.
 3. **Offline Sync & Reconciliation Tests (`tests/test_sync_engine.py`):**
-   - Simulates two isolated SQLite databases generating conflicting operations.
-   - Verifies Last-Write-Wins and operation deduplication rules.
+   - Simulates two isolated databases generating conflicting operations.
+   - Verifies field-level LWW conflict resolution and operation deduplication rules.
 4. **LangGraph & AI Output Validation Tests (`tests/test_agent_schemas.py`):**
    - Mocks Groq API responses and verifies Pydantic schema validation.
    - Tests graceful exception handling during API timeouts.
@@ -752,7 +763,7 @@ The end-to-end demonstration follows this exact reproducible journey:
 │   ├── ai/                     # LangGraph agents & Groq orchestration
 │   ├── rag/                    # ChromaDB vector store & SOP retriever
 │   ├── mcp/                    # FastMCP tool server
-│   ├── sync/                   # Sync queue & peer merger
+│   ├── sync/                   # Sync protocol & transport adapters
 │   └── persistence/            # SQLite database & seed dataset
 ├── data/                       # Expedition SOP Markdown files for RAG ingestion
 │   └── sops/
@@ -819,18 +830,18 @@ Running the complete Aurora platform locally requires two lightweight processes:
 └───────────────────────────────────────┘   └────────────────────────────┘
 ```
 
-If Internet is severed during the SIH presentation, the platform remains 100% operational in **Offline Baseline Mode** without throwing unhandled exceptions.
+If Internet is severed during the SIH presentation, the platform's **deterministic core remains fully operational** without throwing unhandled exceptions.
 
 ---
 
 ## 31. Production vs. SIH Boundary
 
 - **IMPLEMENT NOW (SIH Demo Scope):**
-  - Single-process FastAPI backend with embedded SQLite database.
-  - Local NetworkX graph solver and rule-based constraint engine.
+  - Single-process FastAPI backend with embedded SQLite central database and IndexedDB client browser replica.
+  - Local NetworkX DAG graph solver with cycle detection and rule-based constraint engine.
   - Local ChromaDB vector index loaded with real polar SOP Markdown files.
   - Single Groq LLM API provider integration with Pydantic output validation.
-  - Local operational sync queue and Web Bluetooth / GATT bridge payload format.
+  - Application Sync Protocol with field-level LWW conflict resolution and Web Bluetooth / GATT bridge adapter.
   - React + Vite responsive UI with explicit Human-in-the-Loop approval modals.
 - **FUTURE ROADMAP (Post-SIH Enterprise Expansion):**
   - Distributed multi-master database cluster (PostgreSQL + Bucardo).
@@ -870,7 +881,7 @@ If Internet is severed during the SIH presentation, the platform remains 100% op
 | Spec Acceptance Criteria | Architecture Component / Module | Design Mechanism |
 | :--- | :--- | :--- |
 | **AC-01 (Unified State Model)** | `backend/core/models.py` | SQLModel entity definitions for Missions, Cargo, Assets, Personnel. |
-| **AC-03 (Offline Cargo Disruption)** | `backend/core/graph_solver.py` | NetworkX graph traversal computes impact set offline without LLM. |
+| **AC-03 (Offline Cargo Disruption)** | `backend/core/graph_solver.py` | NetworkX DAG graph traversal computes impact set offline without LLM. |
 | **AC-05 (Reproducible Results)** | `backend/core/graph_solver.py` | Pure deterministic Python algorithms ensure identical output per state. |
 | **AC-06 (Offline Core Execution)** | `backend/core/state_engine.py` | Full SQLite CRUD and constraint engine runs in local Python process. |
 | **AC-08 (Real RAG Citations)** | `backend/rag/retriever.py` | ChromaDB vector query fetches actual repository SOP chunks with metadata. |
@@ -882,9 +893,9 @@ If Internet is severed during the SIH presentation, the platform remains 100% op
 ## 35. Definition of Architectural Done
 
 This architecture document (`docs/architecture.md`) is complete because:
-- Every major technical component (Frontend, Backend, Database, AI, RAG, MCP, Sync, BLE) has a concrete, non-ambiguous technology choice.
-- The deterministic operational core is strictly isolated from AI dependencies.
-- Multi-device peer synchronization and BLE GATT transport protocols are explicitly defined.
+- Every major technical component (Frontend, IndexedDB Replica, Backend, Database, AI, RAG, MCP, Sync Protocol, BLE Transport) has a concrete, non-ambiguous technology choice.
+- The deterministic operational core is strictly isolated from AI dependencies and enforces DAG cycle prevention.
+- Multi-device peer synchronization clearly separates the Application Sync Protocol (LWW merge model) from physical transport adapters.
 - Human-in-the-Loop approval gates are enforced at both the API and database levels.
 - Full directory structure, API routes, and developer startup workflows are fully detailed.
 - No contradictions exist with `AGENTS.md` or `docs/spec.md`.
