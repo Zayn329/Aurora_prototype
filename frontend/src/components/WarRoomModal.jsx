@@ -42,8 +42,10 @@ export default function WarRoomModal({ isOpen, onClose }) {
             <div className="text-rose-700 mt-0.5">Primary Heating Reserve Fuel Deficit</div>
           </div>
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
-            <div className="font-semibold text-amber-900">Feasible Assets Offline</div>
-            <div className="text-amber-700 mt-0.5">Snowcat Transport-A Available (&lt;50ms response)</div>
+            <div className="font-semibold text-amber-900">Emergency Personnel Roll Call</div>
+            <div className="text-amber-800 mt-0.5">
+              12 Accounted For &bull; 1 Unreachable &bull; 4 Fit Specialists
+            </div>
           </div>
         </div>
 

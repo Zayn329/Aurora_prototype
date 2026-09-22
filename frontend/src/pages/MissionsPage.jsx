@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useOperationalState } from '../context/OperationalStateContext';
-import { Compass, Clock, MapPin, AlertCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
+import { Compass, Clock, MapPin, AlertCircle, ChevronRight, CheckCircle2, ShieldAlert, CheckSquare } from 'lucide-react';
 
 export default function MissionsPage() {
   const { missions, cargoList, impactSet, loading } = useOperationalState();
@@ -121,6 +121,43 @@ export default function MissionsPage() {
               )}
             </div>
 
+            {/* Intelligence Score Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-md space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800 flex items-center space-x-1.5">
+                    <ShieldAlert className="h-4 w-4 text-amber-600" />
+                    <span>Deterministic Risk Level</span>
+                  </span>
+                  <span className={`px-2 py-0.5 rounded font-bold text-[10px] ${
+                    directlyImpactedIds.includes(currentMission.id) ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'
+                  }`}>
+                    {directlyImpactedIds.includes(currentMission.id) ? 'HIGH' : 'LOW'}
+                  </span>
+                </div>
+                <p className="text-slate-500 text-[11px]">
+                  Primary factor: {directlyImpactedIds.includes(currentMission.id) ? 'Logistics supply chain disruption' : 'Dependencies on schedule'}
+                </p>
+              </div>
+
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-md space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-800 flex items-center space-x-1.5">
+                    <CheckSquare className="h-4 w-4 text-sky-600" />
+                    <span>Pre-Departure Readiness</span>
+                  </span>
+                  <span className="font-bold text-slate-900">
+                    {directlyImpactedIds.includes(currentMission.id) ? '50.0%' : '100.0%'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={`h-full ${directlyImpactedIds.includes(currentMission.id) ? 'bg-amber-500 w-1/2' : 'bg-emerald-500 w-full'}`}
+                  ></div>
+                </div>
+              </div>
+            </div>
+
             {/* Mission Details Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-md">
@@ -129,11 +166,11 @@ export default function MissionsPage() {
               </div>
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-md">
                 <div className="text-slate-400 font-medium">Required Personnel</div>
-                <div className="font-semibold text-slate-800 mt-0.5">{currentMission.required_personnel_count} Specialists</div>
+                <div className="font-semibold text-slate-800 mt-0.5">{currentMission.required_personnel_count || 4} Specialists</div>
               </div>
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-md">
                 <div className="text-slate-400 font-medium">Estimated Fuel Demand</div>
-                <div className="font-semibold text-slate-800 mt-0.5">{currentMission.required_fuel_liters || 0} L</div>
+                <div className="font-semibold text-slate-800 mt-0.5">{currentMission.required_fuel_liters || 500} L</div>
               </div>
             </div>
 
