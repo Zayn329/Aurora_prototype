@@ -166,18 +166,18 @@ export default function Hero({
         <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-100 via-slate-100/60 to-transparent pointer-events-none" />
       </div>
 
-      {/* Social Proof / Partner Logos Strip (matching screenshot) */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-2">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 pt-4 border-t border-neutral-100">
-          {/* Label */}
-          <div className="text-left w-full md:w-auto">
-            <p className="text-xs text-neutral-400 font-medium leading-snug max-w-[170px]">
+      {/* Social Proof / Partner Logos Strip (Full Width) */}
+      <div className="w-full px-4 sm:px-8 lg:px-12 pt-2">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 pt-4 border-t border-sky-200/50 w-full">
+          {/* Label on Far Left End */}
+          <div className="text-left w-full md:w-auto shrink-0">
+            <p className="text-xs text-slate-500 font-medium leading-snug max-w-[200px]">
               Trusted by research stations and polar expeditions worldwide
             </p>
           </div>
 
-          {/* Partner Brand Logos */}
-          <div className="w-full md:flex-1 flex flex-wrap items-center justify-between md:justify-end gap-6 sm:gap-10 md:gap-14 opacity-80 hover:opacity-100 transition-opacity">
+          {/* Partner Brand Logos Spanning Across to Far Right End */}
+          <div className="w-full md:flex-1 flex flex-wrap items-center justify-between md:justify-end gap-6 sm:gap-10 md:gap-12 lg:gap-16 opacity-85 hover:opacity-100 transition-opacity">
             {/* Gumroad Logo */}
             <div className="flex items-center space-x-1.5 cursor-default">
               <span className="font-extrabold text-lg sm:text-xl tracking-wider text-neutral-700 hover:text-neutral-950 font-sans uppercase">
