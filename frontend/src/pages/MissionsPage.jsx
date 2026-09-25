@@ -6,6 +6,25 @@ export default function MissionsPage() {
   const { missions, cargoList, impactSet, loading } = useOperationalState();
   const [selectedMission, setSelectedMission] = useState(null);
 
+  const formatMissionWindow = (mission) => {
+    if (!mission?.planned_start_time || !mission?.planned_end_time) return 'Schedule unavailable';
+
+    const start = new Date(mission.planned_start_time);
+    const end = new Date(mission.planned_end_time);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 'Schedule unavailable';
+
+    const dateFormatter = new Intl.DateTimeFormat(undefined, {
+      month: 'short',
+      day: 'numeric',
+    });
+    const timeFormatter = new Intl.DateTimeFormat(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+
+    return `${dateFormatter.format(start)} ${timeFormatter.format(start)} - ${dateFormatter.format(end)} ${timeFormatter.format(end)}`;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12 text-slate-500 text-sm space-x-2">
@@ -54,12 +73,12 @@ export default function MissionsPage() {
                 >
                   <div className="space-y-1">
                     <div className="font-semibold text-slate-800 flex items-center space-x-1.5">
-                      <span>{m.name}</span>
+                      <span>{m.title || m.name || 'Untitled mission'}</span>
                     </div>
                     <div className="text-[11px] text-slate-500 flex items-center space-x-2">
                       <span className="flex items-center space-x-1">
                         <Clock className="h-3 w-3 text-slate-400" />
-                        <span>Day {m.start_day} - {m.end_day}</span>
+                        <span>{formatMissionWindow(m)}</span>
                       </span>
                     </div>
                   </div>
@@ -100,7 +119,9 @@ export default function MissionsPage() {
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
                 <div className="flex items-center space-x-2">
-                  <h3 className="text-lg font-bold text-slate-900">{currentMission.name}</h3>
+                  <h3 className="text-lg font-bold text-slate-900">
+                    {currentMission.title || currentMission.name || 'Untitled mission'}
+                  </h3>
                   <span className="px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-xs">
                     Priority {currentMission.priority}
                   </span>
@@ -162,7 +183,7 @@ export default function MissionsPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-md">
                 <div className="text-slate-400 font-medium">Timeline</div>
-                <div className="font-semibold text-slate-800 mt-0.5">Day {currentMission.start_day} to Day {currentMission.end_day}</div>
+                <div className="font-semibold text-slate-800 mt-0.5">{formatMissionWindow(currentMission)}</div>
               </div>
               <div className="p-3 bg-slate-50 border border-slate-100 rounded-md">
                 <div className="text-slate-400 font-medium">Required Personnel</div>
@@ -189,8 +210,12 @@ export default function MissionsPage() {
                   .map((c) => (
                     <div key={c.id} className="p-3 border border-slate-200 bg-white rounded-md flex items-center justify-between text-xs">
                       <div>
-                        <div className="font-semibold text-slate-800">{c.name}</div>
-                        <div className="text-[11px] text-slate-500">Category: {c.category} | Weight: {c.weight_kg} kg</div>
+                        <div className="font-semibold text-slate-800">
+                          {c.item_name || c.name || c.id || 'Unnamed cargo'}
+                        </div>
+                        <div className="text-[11px] text-slate-500">
+                          Category: {c.category} | Quantity: {c.quantity ?? c.weight_kg ?? '—'} {c.unit || (c.weight_kg != null ? 'kg' : '')}
+                        </div>
                       </div>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
                         c.status === 'DELAYED' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'

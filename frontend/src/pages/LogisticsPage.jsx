@@ -21,7 +21,10 @@ export default function LogisticsPage() {
   }
 
   const filteredCargo = cargoList.filter((c) => {
-    const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase());
+    // The API uses `item_name`; keep `name` as a fallback for older local replicas.
+    const itemName = c.item_name ?? c.name ?? '';
+    const searchableText = `${itemName} ${c.id ?? ''}`.toLowerCase();
+    const matchesSearch = searchableText.includes(searchTerm.toLowerCase());
     const matchesCategory = categoryFilter === 'ALL' || c.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
@@ -61,10 +64,10 @@ export default function LogisticsPage() {
           >
             <option value="ALL">All Categories</option>
             <option value="FUEL">Fuel</option>
-            <option value="EQUIPMENT">Equipment</option>
+            <option value="TECHNICAL">Technical</option>
             <option value="RATIONS">Rations</option>
             <option value="MEDICAL">Medical</option>
-            <option value="SCIENTIFIC">Scientific</option>
+            <option value="SURVIVAL">Survival</option>
           </select>
         </div>
       </div>
@@ -76,22 +79,29 @@ export default function LogisticsPage() {
             <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold uppercase tracking-wider">
               <th className="py-3 px-4">Item Name</th>
               <th className="py-3 px-4">Category</th>
-              <th className="py-3 px-4">Weight (kg)</th>
+              <th className="py-3 px-4">Quantity</th>
               <th className="py-3 px-4">Status</th>
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {filteredCargo.map((item) => (
-              <tr key={item.id} className="hover:bg-slate-50/80 transition">
+            {filteredCargo.map((item) => {
+              const itemName = item.item_name ?? item.name ?? item.id ?? 'Unnamed cargo';
+              const quantity = item.quantity ?? item.weight_kg;
+              const quantityLabel = quantity == null
+                ? '—'
+                : `${quantity}${item.unit ? ` ${item.unit}` : ' kg'}`;
+
+              return (
+                <tr key={item.id} className="hover:bg-slate-50/80 transition">
                 <td className="py-3 px-4 font-semibold text-slate-800">
                   <div className="flex items-center space-x-2">
                     <Package className="h-4 w-4 text-slate-400" />
-                    <span>{item.name}</span>
+                    <span>{itemName}</span>
                   </div>
                 </td>
                 <td className="py-3 px-4 text-slate-600">{item.category}</td>
-                <td className="py-3 px-4 text-slate-600">{item.weight_kg} kg</td>
+                <td className="py-3 px-4 text-slate-600">{quantityLabel}</td>
                 <td className="py-3 px-4">
                   <span
                     className={`px-2.5 py-0.5 rounded text-[11px] font-medium border ${
@@ -119,8 +129,9 @@ export default function LogisticsPage() {
                     Simulate Delay
                   </button>
                 </td>
-              </tr>
-            ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

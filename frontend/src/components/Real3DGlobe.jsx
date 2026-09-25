@@ -179,19 +179,9 @@ export default function Real3DGlobe({
     const radius = 4.0;
     const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64);
 
-    const textureLoader = new THREE.TextureLoader();
-    const earthMap = textureLoader.load(
-      '/textures/earth_map.jpg',
-      () => {
-        renderer.render(scene, camera);
-      },
-      undefined,
-      (err) => console.warn('Earth texture load warning:', err)
-    );
-    earthMap.colorSpace = THREE.SRGBColorSpace;
-
     const earthMaterial = new THREE.MeshStandardMaterial({
-      map: earthMap,
+      // Keep the globe self-contained when no external earth texture is bundled.
+      color: 0x93c5fd,
       roughness: 0.55,
       metalness: 0.05,
       bumpScale: 0.04

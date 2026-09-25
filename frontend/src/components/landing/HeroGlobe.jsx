@@ -48,19 +48,9 @@ export default function HeroGlobe() {
     const radius = 2.05;
     const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64);
 
-    const textureLoader = new THREE.TextureLoader();
-    const earthMap = textureLoader.load(
-      '/textures/earth_map.jpg',
-      () => {
-        renderer.render(scene, camera);
-      },
-      undefined,
-      (err) => console.warn('Hero globe texture load warning:', err)
-    );
-    earthMap.colorSpace = THREE.SRGBColorSpace;
-
     const earthMaterial = new THREE.MeshStandardMaterial({
-      map: earthMap,
+      // Keep the hero globe self-contained when no external earth texture is bundled.
+      color: 0x7dd3fc,
       roughness: 0.5,
       metalness: 0.05,
       bumpScale: 0.03

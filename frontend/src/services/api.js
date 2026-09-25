@@ -1,5 +1,5 @@
-const API_BASE_URL = 'http://localhost:8000';
-
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 async function fetchJson(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`;
   const config = {
@@ -14,7 +14,9 @@ async function fetchJson(endpoint, options = {}) {
     const response = await fetch(url, config);
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const errorMsg = errorData.detail || `HTTP Error ${response.status}: ${response.statusText}`;
+      const errorMsg = formatApiError(
+        errorData.detail || `HTTP Error ${response.status}: ${response.statusText}`
+      );
       throw new Error(errorMsg);
     }
     return await response.json();
@@ -22,6 +24,25 @@ async function fetchJson(endpoint, options = {}) {
     console.error(`API Error on ${endpoint}:`, err);
     throw err;
   }
+}
+
+function formatApiError(detail) {
+  if (typeof detail === 'string') return detail;
+
+  if (Array.isArray(detail)) {
+    return detail
+      .map((error) => {
+        const location = Array.isArray(error?.loc) ? error.loc.join('.') : 'request';
+        return `${location}: ${error?.msg || 'Invalid value'}`;
+      })
+      .join('; ');
+  }
+
+  if (detail && typeof detail === 'object') {
+    return detail.message || detail.msg || JSON.stringify(detail);
+  }
+
+  return String(detail);
 }
 
 export const api = {
