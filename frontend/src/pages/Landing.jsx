@@ -28,14 +28,14 @@ export default function Landing() {
         {/* 02 — WORKFLOW VIDEO: See the operation unfold. */}
         <HowItWorks />
 
-        {/* 03 — ONE OPERATIONAL LAYER: Built around the operation, not the department. */}
+        {/* 03 — ONE OPERATIONAL LAYER: Southern Ocean & Ice-Shelf Resupply */}
         <OperationLayer />
 
-        {/* 04 — OPERATION WORKSPACE: Operation 047 with live tabs */}
-        <OperationWorkspace />
-
-        {/* 05 — INTELLIGENCE: Weather → Risk → Recommendation */}
+        {/* 04 — INTELLIGENCE LAYER: From raw data to mission decisions */}
         <IntelligenceSection />
+
+        {/* 05 — OPERATION WORKSPACE: Operation 047 with live tabs */}
+        <OperationWorkspace />
 
         {/* 06 — BUILT FOR THE POLAR FRONTIER: Transportation, Research, Expeditions */}
         <PolarFrontier />
