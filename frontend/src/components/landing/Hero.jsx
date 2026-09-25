@@ -162,13 +162,13 @@ export default function Hero({
           className="w-full h-full block"
           style={{ width: '100%', height: '100%' }}
         />
-        {/* Subtle fade mask at bottom matching gradient */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-slate-100 via-slate-100/60 to-transparent pointer-events-none" />
+        {/* Seamless blend mask at bottom matching polar background */}
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-blue-50/90 via-sky-50/60 to-transparent pointer-events-none" />
       </div>
 
-      {/* Social Proof / Partner Logos Strip (Full Width) */}
+      {/* Social Proof / Partner Logos Strip (Full Width, seamless without divider line) */}
       <div className="w-full px-4 sm:px-8 lg:px-12 pt-2">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 pt-4 border-t border-sky-200/50 w-full">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 pt-2 w-full">
           {/* Label on Far Left End */}
           <div className="text-left w-full md:w-auto shrink-0">
             <p className="text-xs text-slate-500 font-medium leading-snug max-w-[200px]">
