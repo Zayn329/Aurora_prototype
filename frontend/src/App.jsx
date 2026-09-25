@@ -9,6 +9,7 @@ import LogisticsPage from './pages/LogisticsPage';
 import IncidentsPage from './pages/IncidentsPage';
 import DecisionsPage from './pages/DecisionsPage';
 import SystemPage from './pages/SystemPage';
+import Landing from './pages/Landing';
 
 export default function App() {
   return (
@@ -16,15 +17,22 @@ export default function App() {
       <SyncProvider>
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<AppLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<DashboardPage />} />
-              <Route path="missions" element={<MissionsPage />} />
-              <Route path="logistics" element={<LogisticsPage />} />
-              <Route path="incidents" element={<IncidentsPage />} />
-              <Route path="decisions" element={<DecisionsPage />} />
-              <Route path="system" element={<SystemPage />} />
+            {/* Landing Page */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/landing" element={<Landing />} />
+
+            {/* Operational Command Application */}
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/missions" element={<MissionsPage />} />
+              <Route path="/logistics" element={<LogisticsPage />} />
+              <Route path="/incidents" element={<IncidentsPage />} />
+              <Route path="/decisions" element={<DecisionsPage />} />
+              <Route path="/system" element={<SystemPage />} />
             </Route>
+
+            {/* Fallback route back to Landing */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
       </SyncProvider>
