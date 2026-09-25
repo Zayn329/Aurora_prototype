@@ -141,7 +141,7 @@ export default function Real3DGlobe({
     // 1. Scene & Camera
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
-    camera.position.set(0, 1.0, 12 / zoomScale);
+    camera.position.set(0, 0.5, 12.0 / zoomScale);
     cameraRef.current = camera;
 
     // 2. WebGL Renderer
@@ -175,8 +175,8 @@ export default function Real3DGlobe({
     scene.add(globeGroup);
     globeGroupRef.current = globeGroup;
 
-    // 5. Earth Sphere with High-Res Texture
-    const radius = 4.0;
+    // 5. Earth Sphere with High-Res Texture (comfortably larger proportion)
+    const radius = 3.15;
     const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64);
 
     const textureLoader = new THREE.TextureLoader();
@@ -253,7 +253,7 @@ export default function Real3DGlobe({
       waypointPositions[wp.id] = pos;
 
       // Inner Dot
-      const dotGeo = new THREE.SphereGeometry(wp.isPrimary ? 0.09 : 0.06, 16, 16);
+      const dotGeo = new THREE.SphereGeometry(wp.isPrimary ? 0.075 : 0.05, 16, 16);
       const dotMat = new THREE.MeshBasicMaterial({ color: wp.color });
       const dot = new THREE.Mesh(dotGeo, dotMat);
       dot.position.copy(pos);
@@ -262,7 +262,7 @@ export default function Real3DGlobe({
       interactiveMeshes.push(dot);
 
       // Outer Pulsing Ring
-      const circleGeo = new THREE.RingGeometry(0.12, 0.17, 32);
+      const circleGeo = new THREE.RingGeometry(0.09, 0.13, 32);
       const circleMat = new THREE.MeshBasicMaterial({
         color: wp.color,
         transparent: true,
@@ -307,22 +307,28 @@ export default function Real3DGlobe({
     });
 
     // 10. Interactive Dragging & Click Selection
-    let isDragging = false;
+    let isPointerDown = false;
     let previousMousePosition = { x: 0, y: 0 };
     let dragVelocity = { x: 0, y: 0 };
     let dragDistance = 0;
 
-    const onMouseDown = (e) => {
+    const onPointerDown = (e) => {
       if (e.target.closest('.interactive-control-overlay')) return;
-      isDragging = true;
+      isPointerDown = true;
       dragDistance = 0;
-      previousMousePosition = { x: e.clientX, y: e.clientY };
+      // Instantly stop all rotation when clicked
+      dragVelocity = { x: 0, y: 0 };
+      const clientX = e.clientX || (e.touches && e.touches[0]?.clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0]?.clientY) || 0;
+      previousMousePosition = { x: clientX, y: clientY };
     };
 
-    const onMouseMove = (e) => {
-      if (!isDragging) return;
-      const deltaX = e.clientX - previousMousePosition.x;
-      const deltaY = e.clientY - previousMousePosition.y;
+    const onPointerMove = (e) => {
+      if (!isPointerDown) return;
+      const clientX = e.clientX || (e.touches && e.touches[0]?.clientX) || 0;
+      const clientY = e.clientY || (e.touches && e.touches[0]?.clientY) || 0;
+      const deltaX = clientX - previousMousePosition.x;
+      const deltaY = clientY - previousMousePosition.y;
       dragDistance += Math.abs(deltaX) + Math.abs(deltaY);
 
       globeGroup.rotation.y += deltaX * 0.005;
@@ -331,18 +337,21 @@ export default function Real3DGlobe({
       globeGroup.rotation.x = Math.max(-1.3, Math.min(1.3, globeGroup.rotation.x));
 
       dragVelocity = { x: deltaX * 0.003, y: deltaY * 0.003 };
-      previousMousePosition = { x: e.clientX, y: e.clientY };
+      previousMousePosition = { x: clientX, y: clientY };
     };
 
-    const onMouseUp = (e) => {
-      isDragging = false;
+    const onPointerUp = (e) => {
+      if (!isPointerDown) return;
+      isPointerDown = false;
 
       // Click detection if barely moved
-      if (dragDistance < 6 && onSelectStation) {
+      if (dragDistance < 8 && onSelectStation) {
+        const clientX = e.clientX || (e.changedTouches && e.changedTouches[0]?.clientX) || 0;
+        const clientY = e.clientY || (e.changedTouches && e.changedTouches[0]?.clientY) || 0;
         const rect = renderer.domElement.getBoundingClientRect();
         const mouse = new THREE.Vector2(
-          ((e.clientX - rect.left) / rect.width) * 2 - 1,
-          -((e.clientY - rect.top) / rect.height) * 2 + 1
+          ((clientX - rect.left) / rect.width) * 2 - 1,
+          -((clientY - rect.top) / rect.height) * 2 + 1
         );
 
         const raycaster = new THREE.Raycaster();
@@ -358,32 +367,14 @@ export default function Real3DGlobe({
       }
     };
 
-    window.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
+    const domElement = renderer.domElement;
+    domElement.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
 
-    // Touch Support
-    const onTouchStart = (e) => {
-      if (e.touches.length === 1) {
-        isDragging = true;
-        dragDistance = 0;
-        previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      }
-    };
-    const onTouchMove = (e) => {
-      if (!isDragging || e.touches.length !== 1) return;
-      const deltaX = e.touches[0].clientX - previousMousePosition.x;
-      const deltaY = e.touches[0].clientY - previousMousePosition.y;
-      globeGroup.rotation.y += deltaX * 0.005;
-      globeGroup.rotation.x += deltaY * 0.005;
-      dragVelocity = { x: deltaX * 0.003, y: deltaY * 0.003 };
-      previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    };
-    const onTouchEnd = () => { isDragging = false; };
-
-    window.addEventListener('touchstart', onTouchStart);
-    window.addEventListener('touchmove', onTouchMove);
-    window.addEventListener('touchend', onTouchEnd);
+    domElement.addEventListener('touchstart', onPointerDown, { passive: false });
+    window.addEventListener('touchmove', onPointerMove, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
 
     // 11. Animation Loop: CONTINUOUS SMOOTH ROTATION
     let animationFrameId;
@@ -393,8 +384,8 @@ export default function Real3DGlobe({
       animationFrameId = requestAnimationFrame(animate);
       const elapsedTime = clock.getElapsedTime();
 
-      // FULL CONTINUOUS ROTATION
-      if (!isDragging) {
+      // When clicked/pressed, globe stops dead in its tracks. When released, immediately resumes moving.
+      if (!isPointerDown) {
         if (autoRotateRef.current) {
           globeGroup.rotation.y += 0.0022 * rotationSpeedRef.current + dragVelocity.x;
         } else {
@@ -403,8 +394,8 @@ export default function Real3DGlobe({
         globeGroup.rotation.x += dragVelocity.y;
 
         // Damping inertial velocity
-        dragVelocity.x *= 0.93;
-        dragVelocity.y *= 0.93;
+        dragVelocity.x *= 0.92;
+        dragVelocity.y *= 0.92;
       }
 
       // Animate pulsing rings on waypoints
@@ -434,12 +425,12 @@ export default function Real3DGlobe({
     // Cleanup on unmount
     return () => {
       cancelAnimationFrame(animationFrameId);
-      window.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchmove', onTouchMove);
-      window.removeEventListener('touchend', onTouchEnd);
+      domElement.removeEventListener('mousedown', onPointerDown);
+      window.removeEventListener('mousemove', onPointerMove);
+      window.removeEventListener('mouseup', onPointerUp);
+      domElement.removeEventListener('touchstart', onPointerDown);
+      window.removeEventListener('touchmove', onPointerMove);
+      window.removeEventListener('touchend', onPointerUp);
       window.removeEventListener('resize', handleResize);
 
       if (container && renderer.domElement) {

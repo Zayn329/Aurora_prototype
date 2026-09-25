@@ -4,6 +4,8 @@ __pycache__/
 *.pyd
 .pytest_cache/
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 .env

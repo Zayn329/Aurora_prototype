@@ -17,6 +17,7 @@ from backend.api.routes_cargo import router as cargo_router
 from backend.api.routes_disruptions import router as disruptions_router
 from backend.api.routes_sync import router as sync_router
 from backend.api.routes_rag import router as rag_router
+from backend.api.routes_expedition import router as expedition_router
 from backend.persistence.seed import seed_database
 from backend.rag.ingestion import ingest_sops_to_chroma
 
@@ -72,6 +73,7 @@ app.include_router(cargo_router, prefix="/api/v1")
 app.include_router(disruptions_router, prefix="/api/v1")
 app.include_router(sync_router, prefix="/api/v1")
 app.include_router(rag_router, prefix="/api/v1")
+app.include_router(expedition_router)
 
 
 if __name__ == "__main__":

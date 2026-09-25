@@ -6,7 +6,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 w-full bg-gradient-to-r from-sky-50/95 via-blue-50/90 to-cyan-50/95 backdrop-blur-md border-b border-sky-200/70 z-50 shadow-[0_2px_12px_rgba(14,165,233,0.08)] transition-all">
+    <header className="fixed top-0 left-0 right-0 w-full bg-gradient-to-r from-sky-50/95 via-blue-50/90 to-cyan-50/95 backdrop-blur-md z-50 shadow-[0_2px_8px_rgba(15,23,42,0.03)] transition-all">
       <div className="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
         
         {/* Left Side Links - shifted to far left end */}
@@ -65,7 +65,7 @@ export default function Navbar() {
 
       {/* Mobile Dropdown Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-sky-200/80 bg-gradient-to-b from-sky-50 via-blue-50/95 to-cyan-50 px-4 sm:px-8 pt-3 pb-6 space-y-3 shadow-lg shadow-sky-950/5">
+        <div className="md:hidden border-b border-slate-200/60 bg-gradient-to-b from-sky-50 via-blue-50/95 to-cyan-50 px-4 sm:px-8 pt-3 pb-6 space-y-3 shadow-md shadow-slate-900/5">
           <div className="flex flex-col space-y-2 text-sm font-medium text-slate-800">
             <a 
               href="#overview" 

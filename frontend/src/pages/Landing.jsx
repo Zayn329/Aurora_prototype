@@ -25,8 +25,8 @@ export default function Landing() {
         {/* 01 — HERO: Plan. Move. Monitor. Respond. */}
         <Hero secondaryCtaLink="#how-it-works" />
 
-        {/* 02 — WORKFLOW VIDEO: See the operation unfold. */}
-        <HowItWorks />
+        {/* 02 — WORKFLOW VIDEO: Mission Command in Extreme Environments */}
+        <HowItWorks videoSrc="/over.mp4" />
 
         {/* 03 — ONE OPERATIONAL LAYER: Southern Ocean & Ice-Shelf Resupply */}
         <OperationLayer />
