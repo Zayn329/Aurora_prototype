@@ -60,10 +60,10 @@ export default function Hero({
       </div>
 
       {/* Real 3D Rotating Interactive Earth Globe within the Hero Section */}
-      <div className="relative w-full h-[320px] sm:h-[390px] md:h-[450px] mt-2 sm:mt-4 overflow-hidden">
+      <div className="relative w-full h-[270px] sm:h-[320px] md:h-[370px] mt-1 sm:mt-2 overflow-hidden">
         <HeroGlobe />
         {/* Seamless blend mask at bottom matching polar background */}
-        <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-blue-50/90 via-sky-50/50 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-blue-50/90 via-sky-50/50 to-transparent pointer-events-none" />
       </div>
 
       {/* Social Proof / Partner Logos Strip (Full Width, seamless without divider line) */}

@@ -16,7 +16,7 @@ export default function HeroGlobe() {
     // 1. Scene & Camera
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
-    camera.position.set(0, 0.3, 11.8);
+    camera.position.set(0, 0.2, 11.0);
 
     // 2. WebGL Renderer with alpha transparency
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -44,8 +44,8 @@ export default function HeroGlobe() {
     globeGroup.rotation.y = -0.5;
     scene.add(globeGroup);
 
-    // 5. Earth Sphere (calibrated slightly smaller)
-    const radius = 2.75;
+    // 5. Earth Sphere (calibrated compact size)
+    const radius = 2.05;
     const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64);
 
     const textureLoader = new THREE.TextureLoader();
@@ -130,14 +130,14 @@ export default function HeroGlobe() {
       waypointPositions[wp.id] = pos;
 
       // Center Dot
-      const dotGeo = new THREE.SphereGeometry(wp.primary ? 0.08 : 0.05, 16, 16);
+      const dotGeo = new THREE.SphereGeometry(wp.primary ? 0.055 : 0.038, 16, 16);
       const dotMat = new THREE.MeshBasicMaterial({ color: wp.color });
       const dot = new THREE.Mesh(dotGeo, dotMat);
       dot.position.copy(pos);
       markerGroup.add(dot);
 
       // Pulsing Ring
-      const circleGeo = new THREE.RingGeometry(0.1, 0.15, 32);
+      const circleGeo = new THREE.RingGeometry(0.07, 0.105, 32);
       const circleMat = new THREE.MeshBasicMaterial({
         color: wp.color,
         transparent: true,
