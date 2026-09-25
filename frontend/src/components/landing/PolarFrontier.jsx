@@ -43,7 +43,7 @@ export default function PolarFrontier() {
   ];
 
   return (
-    <section className="relative w-full py-20 sm:py-28 bg-transparent select-none">
+    <section id="about" className="relative w-full py-20 sm:py-28 bg-transparent select-none">
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto mb-16 sm:mb-20">

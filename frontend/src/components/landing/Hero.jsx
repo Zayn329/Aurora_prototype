@@ -108,7 +108,7 @@ export default function Hero({
   }, []);
 
   return (
-    <div className="relative w-full bg-gradient-to-b from-sky-100/80 via-blue-50/60 to-transparent pt-10 sm:pt-14 pb-8 overflow-hidden select-none">
+    <div id="overview" className="relative w-full bg-gradient-to-b from-sky-100/80 via-blue-50/60 to-transparent pt-10 sm:pt-14 pb-8 overflow-hidden select-none">
       {/* Richer Polar Blue Ambient Background Glows */}
       <div className="absolute -top-12 left-1/2 -translate-x-1/2 w-[1100px] h-[520px] bg-gradient-to-b from-sky-300/35 via-blue-200/25 to-transparent rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-10 left-1/4 w-[500px] h-[300px] bg-sky-400/20 rounded-full blur-[90px] pointer-events-none -z-10" />
