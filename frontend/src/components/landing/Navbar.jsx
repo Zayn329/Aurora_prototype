@@ -6,7 +6,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="w-full bg-gradient-to-r from-sky-50/90 via-blue-50/85 to-cyan-50/90 backdrop-blur-md border-b border-sky-200/60 sticky top-0 z-50 shadow-[0_1px_4px_rgba(14,165,233,0.06)]">
+    <header className="fixed top-0 left-0 right-0 w-full bg-gradient-to-r from-sky-50/95 via-blue-50/90 to-cyan-50/95 backdrop-blur-md border-b border-sky-200/70 z-50 shadow-[0_2px_12px_rgba(14,165,233,0.08)] transition-all">
       <div className="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
         
         {/* Left Side Links - shifted to far left end */}
