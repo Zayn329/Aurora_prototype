@@ -16,7 +16,7 @@ export default function HeroGlobe() {
     // 1. Scene & Camera
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, width / height, 0.1, 1000);
-    camera.position.set(0, 0.5, 11.5);
+    camera.position.set(0, 0.3, 11.8);
 
     // 2. WebGL Renderer with alpha transparency
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -44,8 +44,8 @@ export default function HeroGlobe() {
     globeGroup.rotation.y = -0.5;
     scene.add(globeGroup);
 
-    // 5. Earth Sphere
-    const radius = 3.6;
+    // 5. Earth Sphere (calibrated slightly smaller)
+    const radius = 2.75;
     const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64);
 
     const textureLoader = new THREE.TextureLoader();
