@@ -34,14 +34,11 @@ export default function Landing() {
         {/* 04 — INTELLIGENCE LAYER: From raw data to mission decisions */}
         <IntelligenceSection />
 
-        {/* 05 — OPERATION WORKSPACE: Operation 047 with live tabs */}
-        <OperationWorkspace />
+       
 
-        {/* 06 — BUILT FOR THE POLAR FRONTIER: Transportation, Research, Expeditions */}
-        <PolarFrontier />
+        
 
-        {/* 07 — COMMAND: One operational picture. From field to command. */}
-        <CommandShowcase />
+        
       </main>
 
       {/* 08 — CTA & POLAR FOOTER: Coordinate the next operation. */}

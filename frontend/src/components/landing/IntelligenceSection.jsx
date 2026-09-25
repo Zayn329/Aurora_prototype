@@ -154,37 +154,14 @@ export default function IntelligenceSection() {
               </p>
             </div>
 
-            {/* Visual: Phone with Floating Card Overlay (Exact Match to Reference Style) */}
-            <div className="relative w-full flex items-center justify-center pt-2">
-              {/* Upright Light Theme 3D Mobile Phone */}
+            {/* Visual: Clean 3D Mobile Phone (Enlarged, No Floating Overlay Box) */}
+            <div className="relative w-full flex items-center justify-center pt-2 sm:pt-4">
               <img
                 src="/ship_route_transparent.png"
                 alt="Aurora Route Intelligence 3D Mobile View"
-                className="w-full max-w-[210px] sm:max-w-[240px] h-auto object-contain drop-shadow-[0_16px_32px_rgba(15,23,42,0.12)] transition-transform duration-300 hover:scale-[1.02]"
+                className="w-full max-w-[310px] sm:max-w-[350px] md:max-w-[380px] h-auto object-contain drop-shadow-[0_20px_36px_rgba(15,23,42,0.14)] transition-transform duration-300 hover:scale-[1.02]"
                 loading="lazy"
               />
-
-              {/* Floating Stat Card overlapping the phone (like the balance card in reference image) */}
-              <div className="absolute top-1/2 left-2 sm:left-4 -translate-y-1/2 bg-white/95 backdrop-blur-md rounded-2xl p-3.5 sm:p-4 border border-sky-200/80 shadow-lg shadow-sky-950/5 max-w-[190px] sm:max-w-[210px] z-10 pointer-events-none">
-                <div className="flex items-center space-x-2 mb-1.5">
-                  <div className="w-6 h-6 rounded-full bg-sky-100 flex items-center justify-center">
-                    <Ship className="w-3.5 h-3.5 text-sky-700" />
-                  </div>
-                  <div className="text-[11px] font-sans font-bold text-slate-900 truncate">
-                    MV Arctic Guardian
-                  </div>
-                </div>
-                <div className="text-base sm:text-lg font-bold font-mono text-slate-900 tracking-tight">
-                  4,200 NM
-                </div>
-                <p className="text-[10px] text-slate-500 font-sans mt-0.5 leading-tight">
-                  Optimal sea passage confirmed with zero pack ice entrapment risk.
-                </p>
-                <div className="mt-2 pt-2 border-t border-slate-100 flex justify-between items-center text-[10px] font-mono text-emerald-700 font-bold">
-                  <span>SPEED: 14 KTS</span>
-                  <span>ETA: 24 MAY</span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -390,11 +367,11 @@ export default function IntelligenceSection() {
                 </div>
               ) : (
                 /* Second 3D Mobile View (Seamlessly Blended without inner box) */
-                <div className="relative w-full flex items-center justify-center">
+                <div className="relative w-full flex items-center justify-center pt-2">
                   <img
                     src="/ship_emergency_transparent.png"
                     alt="Aurora Emergency Intelligence 3D Mobile View"
-                    className="w-full max-w-[210px] sm:max-w-[240px] h-auto object-contain drop-shadow-[0_16px_32px_rgba(15,23,42,0.12)] transition-transform duration-300 hover:scale-[1.02]"
+                    className="w-full max-w-[300px] sm:max-w-[340px] md:max-w-[360px] h-auto object-contain drop-shadow-[0_20px_36px_rgba(15,23,42,0.14)] transition-transform duration-300 hover:scale-[1.02]"
                     loading="lazy"
                   />
                   <div className="absolute bottom-2 right-4 bg-white/90 backdrop-blur-sm border border-rose-200/80 rounded-md px-2 py-1 text-[10px] font-mono text-rose-700 shadow-sm flex items-center space-x-1.5">
