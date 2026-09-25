@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import HeroGlobe from './HeroGlobe';
+import worldGrid from './worldGrid.json';
 
 export default function Hero({
   titleLine1 = "Plan. Move. Monitor. Respond.",
@@ -11,6 +11,102 @@ export default function Hero({
   secondaryCtaText = "See how it works",
   secondaryCtaLink = "/missions"
 }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    const rows = worldGrid.length;
+    const cols = worldGrid[0].length;
+
+    const render = () => {
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+
+      if (canvas.width !== Math.round(rect.width * dpr) || canvas.height !== Math.round(rect.height * dpr)) {
+        canvas.width = Math.round(rect.width * dpr);
+        canvas.height = Math.round(rect.height * dpr);
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      const W = rect.width;
+      const H = rect.height;
+      const centerX = W / 2;
+      
+      // Proportional dome arch parameters
+      const archHeight = Math.min(H * 0.32, 110);
+      const topOffset = 30;
+      const contentHeight = H * 0.85;
+
+      for (let r = 0; r < rows; r++) {
+        const rowStr = worldGrid[r];
+        const v = r / (rows - 1); // 0 (north) to 1 (south)
+
+        for (let c = 0; c < cols; c++) {
+          const char = rowStr[c];
+          const isLand = char === '1';
+
+          // Skip empty ocean pixels, only keep subtle periodic grid dots for ocean
+          if (!isLand && (r % 3 !== 0 || c % 3 !== 0)) continue;
+
+          // Normalized horizontal position -1 to 1
+          const u = (c / (cols - 1)) * 2 - 1;
+
+          // Spherical horizon dome curve
+          const curveY = archHeight * (u * u - 1);
+          const y = topOffset + v * contentHeight + curveY + archHeight;
+
+          // Full width horizontal spread
+          const spreadFactor = 0.98 + v * 0.04;
+          const x = centerX + u * (W * 0.495) * spreadFactor;
+
+          if (x < -15 || x > W + 15 || y < -10 || y > H + 10) continue;
+
+          // Bottom fade factor
+          const bottomFade = Math.max(0, Math.min(1, (H - y + 15) / (H * 0.38)));
+          // Soft edge fade at far left/right boundaries
+          const edgeFade = Math.max(0, Math.min(1, (1 - Math.abs(u) * 0.94) * 5));
+
+          if (isLand) {
+            // Crisp, accurate land dots showing real continents
+            const alpha = 0.85 * bottomFade * edgeFade;
+            ctx.fillStyle = `rgba(15, 23, 42, ${alpha})`;
+            const radius = 1.35;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            // Delicate sea ocean coordinate dots
+            const alpha = 0.22 * bottomFade * edgeFade;
+            ctx.fillStyle = `rgba(14, 165, 233, ${alpha})`;
+            const radius = 0.8;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      ctx.restore();
+    };
+
+    render();
+    window.addEventListener('resize', render);
+
+    return () => {
+      window.removeEventListener('resize', render);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
   return (
     <div id="overview" className="relative w-full bg-gradient-to-b from-sky-100/80 via-blue-50/60 to-transparent pt-10 sm:pt-14 pb-8 overflow-hidden select-none">
       {/* Richer Polar Blue Ambient Background Glows */}
@@ -59,11 +155,15 @@ export default function Hero({
         </div>
       </div>
 
-      {/* Real 3D Rotating Interactive Earth Globe within the Hero Section */}
-      <div className="relative w-full h-[270px] sm:h-[320px] md:h-[370px] mt-1 sm:mt-2 overflow-hidden">
-        <HeroGlobe />
+      {/* 3D Curved Perspective Dotted World Grid Globe Canvas - Full Width */}
+      <div className="relative w-full h-[310px] sm:h-[370px] md:h-[430px] mt-6 sm:mt-8 overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          className="w-full h-full block"
+          style={{ width: '100%', height: '100%' }}
+        />
         {/* Seamless blend mask at bottom matching polar background */}
-        <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-blue-50/90 via-sky-50/50 to-transparent pointer-events-none" />
+        <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-blue-50/90 via-sky-50/60 to-transparent pointer-events-none" />
       </div>
 
       {/* Social Proof / Partner Logos Strip (Full Width, seamless without divider line) */}

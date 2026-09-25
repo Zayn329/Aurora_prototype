@@ -1,13 +1,77 @@
-import React, { useState } from 'react';
-import { Play, Compass, Shield, Zap, Sparkles } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
 
 export default function HowItWorks({
   title = "Mission Command in Extreme Environments",
   description = "Watch how Aurora synchronizes overland traverses, monitors supply chains, and automates polar decision-making even when entirely cut off from the global internet.",
-  videoSrc = "",
+  videoSrc = "/over.mp4",
   posterSrc = ""
 }) {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // React has a known quirk where muted isn't always bound as a DOM property on mount
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+
+    const tryPlay = () => {
+      if (video && video.paused) {
+        const promise = video.play();
+        if (promise !== undefined) {
+          promise.catch((err) => {
+            console.log('Autoplay attempt waiting for user interaction:', err);
+          });
+        }
+      }
+    };
+
+    // Attempt immediate play
+    tryPlay();
+
+    // Event listeners to start playing as soon as media chunks arrive
+    video.addEventListener('loadedmetadata', tryPlay);
+    video.addEventListener('loadeddata', tryPlay);
+    video.addEventListener('canplay', tryPlay);
+    video.addEventListener('canplaythrough', tryPlay);
+
+    // If user touches or clicks anywhere on the page, ensure it is playing
+    const handleGlobalInteraction = () => {
+      tryPlay();
+    };
+    window.addEventListener('scroll', handleGlobalInteraction, { passive: true });
+    window.addEventListener('click', handleGlobalInteraction, { passive: true });
+    window.addEventListener('touchstart', handleGlobalInteraction, { passive: true });
+
+    // IntersectionObserver to auto-play whenever section is visible
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            tryPlay();
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(video);
+
+    return () => {
+      observer.disconnect();
+      video.removeEventListener('loadedmetadata', tryPlay);
+      video.removeEventListener('loadeddata', tryPlay);
+      video.removeEventListener('canplay', tryPlay);
+      video.removeEventListener('canplaythrough', tryPlay);
+      window.removeEventListener('scroll', handleGlobalInteraction);
+      window.removeEventListener('click', handleGlobalInteraction);
+      window.removeEventListener('touchstart', handleGlobalInteraction);
+    };
+  }, []);
 
   return (
     <section id="how-it-works" className="relative w-full py-16 sm:py-24 bg-transparent select-none">
@@ -17,8 +81,6 @@ export default function HowItWorks({
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14">
-          
-
           <h2 className="font-serif font-normal sm:font-medium tracking-normal text-slate-900 text-3xl sm:text-4xl lg:text-[44px] leading-[1.2]">
             {title}
           </h2>
@@ -29,76 +91,30 @@ export default function HowItWorks({
         </div>
 
         {/* Full Width Video Showcase Container */}
-        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-sky-200/70 bg-slate-950 shadow-2xl shadow-sky-950/15 group">
-          {videoSrc ? (
-            <video
-              src={videoSrc}
-              poster={posterSrc}
-              controls
-              className="w-full h-full aspect-video object-cover"
-            />
-          ) : (
-            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] min-h-[340px] sm:min-h-[460px] bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 flex flex-col items-center justify-center p-6 text-center overflow-hidden">
-              {/* Polar Technical Grid Background in Video Frame */}
-              <div
-                className="absolute inset-0 opacity-20 pointer-events-none"
-                style={{
-                  backgroundImage: `radial-gradient(circle at 1px 1px, rgba(56, 189, 248, 0.4) 1px, transparent 0)`,
-                  backgroundSize: '24px 24px'
-                }}
-              />
-
-              {/* Ambient Radial Spotlight */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-sky-500/15 rounded-full blur-3xl pointer-events-none" />
-
-              {/* Decorative Corner HUD Markers */}
-              <div className="absolute top-4 left-4 sm:top-6 sm:left-6 flex items-center space-x-2 text-[11px] font-mono text-sky-400/70 tracking-widest uppercase">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span>AURORA // OPERATIONAL VIDEO DEMO</span>
-              </div>
-              <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-[11px] font-mono text-slate-400/60 tracking-wider">
-                HD 1080P • 60 FPS
-              </div>
-
-              {/* Central Interactive Play Button */}
-              <div className="relative z-10 flex flex-col items-center">
-                <button
-                  onClick={() => setIsPlaying(!isPlaying)}
-                  className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 hover:bg-white/20 border border-white/25 backdrop-blur-md flex items-center justify-center text-white transition-all duration-300 transform group-hover:scale-105 active:scale-95 shadow-lg shadow-sky-500/20 group/btn"
-                  aria-label="Play Overview Video"
-                >
-                  <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-white text-white ml-1 transition-transform group-hover/btn:scale-110" />
-                </button>
-                <div className="mt-4 text-xs sm:text-sm font-medium text-slate-200 tracking-wide">
-                  {isPlaying ? "Video Playing" : "Click to watch platform walkthrough"}
-                </div>
-                <div className="mt-1 text-[11px] text-slate-400">
-                  Full width preview space ready for your MP4 / YouTube embed
-                </div>
-              </div>
-
-              {/* Bottom HUD Bar in Video Container */}
-              <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 flex items-center justify-between text-xs text-slate-400/70 border-t border-slate-800/80 pt-3">
-                <div className="flex items-center space-x-4">
-                  <span className="flex items-center space-x-1.5 text-slate-300">
-                    <Compass className="w-3.5 h-3.5 text-sky-400" />
-                    <span className="text-[11px] font-mono">TRAVERSE DISPATCH</span>
-                  </span>
-                  <span className="hidden sm:inline-flex items-center space-x-1.5 text-slate-300">
-                    <Shield className="w-3.5 h-3.5 text-sky-400" />
-                    <span className="text-[11px] font-mono">OFFLINE DETERMINISTIC CORE</span>
-                  </span>
-                  <span className="hidden md:inline-flex items-center space-x-1.5 text-slate-300">
-                    <Zap className="w-3.5 h-3.5 text-sky-400" />
-                    <span className="text-[11px] font-mono">AI DECISION COPILOT</span>
-                  </span>
-                </div>
-                <div className="text-[11px] font-mono text-sky-400/80">
-                  03:42
-                </div>
-              </div>
-            </div>
-          )}
+        <div className="relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-sky-200/80 bg-slate-950 shadow-2xl shadow-sky-950/20">
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            disablePictureInPicture
+            disableRemotePlayback
+            onPause={(e) => {
+              // Ensure it keeps playing continuously
+              e.target.play().catch(() => {});
+            }}
+            onEnded={(e) => {
+              e.target.currentTime = 0;
+              e.target.play().catch(() => {});
+            }}
+            className="w-full h-full aspect-video object-cover bg-black pointer-events-none"
+          >
+            <source src="/over.mp4" type="video/mp4" />
+            <source src="/overview.mp4" type="video/mp4" />
+            Your browser does not support the video tag.
+          </video>
         </div>
       </div>
     </section>
