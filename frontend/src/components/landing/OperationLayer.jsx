@@ -102,7 +102,7 @@ export default function OperationLayer() {
             <div>
 
               <h2 className="font-serif font-medium text-slate-900 text-3xl sm:text-4xl lg:text-5xl mt-1 tracking-tight">
-                Southern Ocean & Ice-Shelf Resupply
+                How ARORA Powers a Polar Mission
               </h2>
             </div>
 
@@ -110,29 +110,9 @@ export default function OperationLayer() {
           </div>
 
           {/* Clean Polar Divider */}
-          <div className="w-full border-t border-sky-200/80 mt-5 mb-3" />
 
           {/* Quick Flow Breadcrumb Pipeline */}
-          <div className="hidden lg:flex items-center justify-between text-[11px] font-mono font-bold text-slate-400 py-1">
-            {steps.map((st, i) => (
-              <React.Fragment key={st.num}>
-                <button
-                  type="button"
-                  onClick={() => setActiveStep(activeStep === i ? null : i)}
-                  className={`flex items-center space-x-1.5 px-2 py-0.5 rounded transition-all ${activeStep === i
-                    ? 'text-sky-900 bg-sky-100 font-extrabold'
-                    : 'hover:text-slate-700'
-                    }`}
-                >
-                  <span className="text-slate-500">{st.num}</span>
-                  <span>{st.title}</span>
-                </button>
-                {i < steps.length - 1 && (
-                  <span className="text-sky-300">&rarr;</span>
-                )}
-              </React.Fragment>
-            ))}
-          </div>
+
         </div>
 
         {/* 6 Minimal Operational Dimension Cards */}

@@ -72,16 +72,11 @@ export default function IntelligenceSection() {
         
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
-          <div className="inline-flex items-center space-x-2 px-3 py-0.5 rounded-full bg-sky-100/70 border border-sky-200/80 text-sky-800 text-[11px] font-mono font-semibold uppercase mb-2.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
-            <span>INTELLIGENCE LAYER</span>
-          </div>
+          
 
           <h2 className="font-serif font-medium text-slate-900 text-3xl sm:text-4xl lg:text-[44px] tracking-tight leading-[1.2]">
-            From raw data to{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-700 via-blue-700 to-indigo-800">
-              mission decisions.
-            </span>
+            From raw data to mission decisions.
+
           </h2>
 
           <p className="mt-2.5 text-xs sm:text-sm text-slate-500 leading-relaxed font-sans">

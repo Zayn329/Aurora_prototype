@@ -1,116 +1,123 @@
 import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import { NavLink, Outlet, Link } from 'react-router-dom';
 import {
-  Compass,
   LayoutDashboard,
-  Compass as MissionIcon,
+  Sliders,
+  Globe,
   Package,
-  AlertTriangle,
-  CheckSquare,
   Settings,
-  RotateCcw
+  Bell
 } from 'lucide-react';
 import { useOperationalState } from '../context/OperationalStateContext';
-import { useSync } from '../context/SyncContext';
-import ConnectionPill from './ConnectionPill';
 
 export default function AppLayout() {
-  const { isOnline, isCheckingHealth, pendingQueueCount, resetSystemState } = useOperationalState();
-  const { isSyncing } = useSync();
-
-  const handleReset = async () => {
-    if (window.confirm('Reset central SQLite database and clear local replica state?')) {
-      await resetSystemState();
-    }
-  };
-
-  const navItems = [
-    { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { path: '/missions', label: 'Missions', icon: MissionIcon },
-    { path: '/logistics', label: 'Logistics & Cargo', icon: Package },
-    { path: '/incidents', label: 'Incidents & Impact', icon: AlertTriangle },
-    { path: '/decisions', label: 'Commander Decisions', icon: CheckSquare },
-    { path: '/system', label: 'System & Sync', icon: Settings },
-  ];
+  const { isOnline } = useOperationalState();
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col font-sans">
-      {/* Top Polar Operational Header */}
-      <header className="border-b border-slate-200 bg-white px-6 py-3.5 flex items-center justify-between sticky top-0 z-50 shadow-sm">
-        <div className="flex items-center space-x-3">
-          <div className="p-1.5 bg-sky-100 rounded-lg border border-sky-200">
-            <Compass className="h-6 w-6 text-sky-700 shrink-0" />
-          </div>
-          <div>
-            <h1 className="text-base font-bold tracking-tight text-slate-900 flex items-center space-x-2">
-              <span>AURORA</span>
-              <span className="text-xs px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-slate-600 font-normal">
-                Polar Command
-              </span>
-            </h1>
-            <p className="text-xs text-slate-500">Antarctic Expedition Command System</p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          {isOnline && (
-            <button
-              onClick={handleReset}
-              className="px-3 py-1.5 rounded-md border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-medium flex items-center space-x-1.5 transition shadow-sm"
-              title="Reset state to seed dataset"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-slate-500" />
-              <span>Reset State</span>
-            </button>
-          )}
-          <ConnectionPill
-            isOnline={isOnline}
-            isCheckingHealth={isCheckingHealth || isSyncing}
-            pendingQueueCount={pendingQueueCount}
-          />
-        </div>
-      </header>
-
-      {/* Main Body with Persistent Sidebar */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Persistent Navigation Sidebar */}
-        <aside className="w-60 border-r border-slate-200 bg-white flex flex-col shrink-0 py-4 px-3 space-y-1">
-          <div className="px-3 pb-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-            Navigation
-          </div>
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) =>
-                  `flex items-center space-x-2.5 px-3 py-2 rounded-md text-xs font-medium transition ${
-                    isActive
-                      ? 'bg-sky-50 text-sky-800 font-semibold border border-sky-100'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                  }`
-                }
-              >
-                <Icon className="h-4 w-4 shrink-0" />
-                <span>{item.label}</span>
-              </NavLink>
-            );
-          })}
-
-          <div className="pt-6 px-3 border-t border-slate-100 mt-auto">
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-md text-[11px] text-slate-600 space-y-1">
-              <div className="font-semibold text-slate-800">Operational Mode</div>
-              <div>Offline-first deterministic core active.</div>
+    <div className="min-h-screen bg-[#f1f3f7] text-slate-800 flex font-sans select-none overflow-x-hidden">
+      
+      {/* Far Left Vertical Slender Navigation Dock (Exact Reference Match) */}
+      <aside className="w-14 sm:w-16 border-r border-slate-200/80 bg-white/80 backdrop-blur-xl flex flex-col items-center justify-between py-5 shrink-0 z-40 fixed top-0 bottom-0 left-0 shadow-sm">
+        
+        {/* Top: Gradient Circular Donut Brand Logo */}
+        <Link to="/" className="group" title="Aurora Platform">
+          <div className="w-8 h-8 rounded-full p-1 bg-gradient-to-tr from-purple-600 via-indigo-500 to-rose-500 flex items-center justify-center shadow-md shadow-indigo-500/30 group-hover:scale-105 transition">
+            <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600" />
             </div>
           </div>
-        </aside>
+        </Link>
 
-        {/* Page Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-6 max-w-7xl mx-auto w-full">
-          <Outlet />
-        </main>
-      </div>
+        {/* Center: Slender Navigation Icon Buttons */}
+        <nav className="flex flex-col items-center space-y-4 my-auto">
+          <NavLink
+            to="/dashboard"
+            className={({ isActive }) =>
+              `w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                isActive
+                  ? 'bg-purple-50 text-purple-700 shadow-sm relative after:absolute after:-left-2 after:w-1 after:h-4 after:bg-purple-600 after:rounded-r-full font-bold'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              }`
+            }
+            title="General Statistics & Expedition Overview"
+          >
+            <LayoutDashboard className="w-4 h-4" />
+          </NavLink>
+
+          <NavLink
+            to="/missions"
+            className={({ isActive }) =>
+              `w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                isActive
+                  ? 'bg-purple-50 text-purple-700 shadow-sm relative after:absolute after:-left-2 after:w-1 after:h-4 after:bg-purple-600 after:rounded-r-full font-bold'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              }`
+            }
+            title="Field Missions & Traverses"
+          >
+            <Sliders className="w-4 h-4" />
+          </NavLink>
+
+          <NavLink
+            to="/dashboard"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-purple-700 bg-purple-50 shadow-sm relative after:absolute after:-left-2 after:w-1 after:h-4 after:bg-purple-600 after:rounded-r-full"
+            title="3D Topographic Expedition Map"
+          >
+            <Globe className="w-4 h-4" />
+          </NavLink>
+
+          <NavLink
+            to="/logistics"
+            className={({ isActive }) =>
+              `w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                isActive
+                  ? 'bg-purple-50 text-purple-700 shadow-sm relative after:absolute after:-left-2 after:w-1 after:h-4 after:bg-purple-600 after:rounded-r-full font-bold'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              }`
+            }
+            title="Logistics & Cargo Manifests"
+          >
+            <Package className="w-4 h-4" />
+          </NavLink>
+
+          <NavLink
+            to="/system"
+            className={({ isActive }) =>
+              `w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
+                isActive
+                  ? 'bg-purple-50 text-purple-700 shadow-sm relative after:absolute after:-left-2 after:w-1 after:h-4 after:bg-purple-600 after:rounded-r-full font-bold'
+                  : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
+              }`
+            }
+            title="System & Offline Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </NavLink>
+        </nav>
+
+        {/* Bottom: Profile Avatar & Notification Bell */}
+        <div className="flex flex-col items-center space-y-3 pt-4 border-t border-slate-100 w-full">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md border-2 border-white">
+            SR
+          </div>
+
+          <Link
+            to="/incidents"
+            className="relative p-1 text-slate-400 hover:text-slate-700 transition"
+            title="Active Alerts"
+          >
+            <Bell className="w-4 h-4" />
+            <span className="w-2 h-2 rounded-full bg-rose-500 absolute top-0.5 right-0.5 ring-2 ring-white" />
+          </Link>
+        </div>
+
+      </aside>
+
+      {/* Main View Area Offset by Left Navigation Dock */}
+      <main className="flex-1 ml-14 sm:ml-16 min-h-screen relative overflow-hidden bg-[#f4f6fa]">
+        <Outlet />
+      </main>
+
     </div>
   );
 }
