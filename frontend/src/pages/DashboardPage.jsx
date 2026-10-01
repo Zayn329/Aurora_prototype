@@ -132,17 +132,17 @@ export default function DashboardPage() {
               <button
                 type="button"
                 onClick={() => setIsEmergencyPopupOpen(true)}
-                className="flex items-center space-x-2.5 px-3.5 py-2 rounded-xl bg-white/95 backdrop-blur-md border border-rose-300 shadow-lg shadow-rose-950/10 hover:border-rose-500 hover:shadow-rose-500/20 transition-all cursor-pointer group"
+                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-white border border-slate-200 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer group"
               >
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600" />
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
                 </span>
-                <span className="text-xs font-bold text-rose-700">
-                  SOS: Dr. Vikram Nair in Distress
+                <span className="text-xs font-medium text-slate-700">
+                  SOS: Dr. Vikram Nair
                 </span>
-                <span className="text-[10px] font-mono bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-bold group-hover:bg-rose-200">
-                  View Alert
+                <span className="text-[10px] font-mono bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded group-hover:bg-slate-200">
+                  View
                 </span>
               </button>
             </div>
