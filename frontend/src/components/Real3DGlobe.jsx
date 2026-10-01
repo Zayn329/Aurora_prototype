@@ -6,13 +6,45 @@ export const EXPEDITION_WAYPOINTS = [
   { 
     id: "bharati", 
     name: "Bharati Research Station", 
-    region: "Larsemann Hills, East Antarctica",
+    region: "Larsemann Hills · East Antarctica",
     lat: -69.4042, 
     lon: 76.1872, 
     isPrimary: true,
     color: 0x6366f1, // Indigo
-    status: "Operational · 46 Personnel",
+    status: "Operational",
+    hasHazard: false,
+    personnel: "46 Deployed",
+    powerAutonomy: "82% (142 Days)",
+    surfaceTemp: "-24°C",
+    windSpeed: "18 km/h",
+    coordinatesText: "69°24'28\"S, 76°11'14\"E",
+    lead: "Adina Hawaldar",
+    satcom: "Encrypted Online",
     activeIncidents: 0
+  },
+  { 
+    id: "inland_traverse", 
+    name: "Survey Sector Echo (Point R-03)", 
+    region: "East Antarctic Ice Sheet",
+    lat: -73.5000, 
+    lon: 74.0000, 
+    isPrimary: false,
+    color: 0xef4444, // Red Hazard
+    status: "Weather Contingency",
+    hasHazard: true,
+    personnel: "4 Field Crew",
+    powerAutonomy: "24% (Reserve)",
+    surfaceTemp: "-42°C",
+    windSpeed: "68 km/h Gale",
+    coordinatesText: "73°30'00\"S, 74°00'00\"E",
+    lead: "Dr. Vikram Nair",
+    satcom: "UHF Mesh Relay",
+    activeIncidents: 1,
+    weatherWarning: {
+      headline: "Severe Katabatic Gale & Whiteout",
+      details: "Wind gusts up to 68 km/h with active drift blizzard. Crevasse movement detected along Primary Route R-03.",
+      advisory: "Traversing carries severe crevasse risk. High recommendation to hold in survival shelter or divert via Southern Ridge Shelter (Route Alt-2)."
+    }
   },
   { 
     id: "maitri", 
@@ -22,19 +54,16 @@ export const EXPEDITION_WAYPOINTS = [
     lon: 11.7333, 
     isPrimary: false,
     color: 0x3b82f6, // Blue
-    status: "Active Research",
+    status: "Operational",
+    hasHazard: false,
+    personnel: "28 Deployed",
+    powerAutonomy: "76% (98 Days)",
+    surfaceTemp: "-19°C",
+    windSpeed: "22 km/h",
+    coordinatesText: "70°46'00\"S, 11°44'00\"E",
+    lead: "Dr. Rajesh Sharma",
+    satcom: "Encrypted Online",
     activeIncidents: 0
-  },
-  { 
-    id: "inland_traverse", 
-    name: "Survey Zone A / Inland Base", 
-    region: "East Antarctic Ice Sheet",
-    lat: -73.5000, 
-    lon: 74.0000, 
-    isPrimary: false,
-    color: 0xef4444, // Red Hazard
-    status: "Route R-03 Hold · Wind 47 km/h",
-    activeIncidents: 1
   },
   { 
     id: "amery_shelf", 

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import {
   Compass,
   ArrowRight,
@@ -15,6 +16,17 @@ import {
 } from 'lucide-react';
 
 export default function LandingCta() {
+  const { isAuthenticated, openAuthModal } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLaunch = (e) => {
+    if (e) e.preventDefault();
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      openAuthModal('/dashboard');
+    }
+  };
   return (
     <footer className="relative w-full pt-16 sm:pt-24 pb-0 bg-transparent select-none overflow-hidden">
       {/* Background Soft Polar Ambient Glow */}
@@ -138,13 +150,14 @@ export default function LandingCta() {
 
               {/* Primary CTA Buttons */}
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <Link
-                  to="/dashboard"
-                  className="px-6 py-2.5 sm:px-7 sm:py-3 text-xs sm:text-sm font-semibold text-white bg-slate-950 hover:bg-slate-900 rounded-full transition-all duration-200 shadow-sm hover:shadow active:scale-[0.98] flex items-center space-x-1.5"
+                <button
+                  type="button"
+                  onClick={handleLaunch}
+                  className="px-6 py-2.5 sm:px-7 sm:py-3 text-xs sm:text-sm font-semibold text-white bg-slate-950 hover:bg-slate-900 rounded-full transition-all duration-200 shadow-sm hover:shadow active:scale-[0.98] flex items-center space-x-1.5 cursor-pointer"
                 >
                   <span>Get Started</span>
                   <ArrowRight className="w-3.5 h-3.5 text-sky-300" />
-                </Link>
+                </button>
 
                 <Link
                   to="/missions"
