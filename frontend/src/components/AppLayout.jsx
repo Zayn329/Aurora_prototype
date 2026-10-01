@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, Outlet, Link, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Globe,
@@ -10,22 +10,31 @@ import {
   AlertTriangle,
   Compass,
   ShieldAlert,
-  Settings
+  Settings,
+  LogOut
 } from 'lucide-react';
 import { useOperationalState } from '../context/OperationalStateContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function AppLayout() {
   const { isOnline } = useOperationalState();
+  const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
 
   const mainNavItems = [
     { label: "Overview", icon: LayoutDashboard, path: "/dashboard?tab=overview" },
     { label: "Map", icon: Globe, path: "/dashboard?tab=map" },
+    { label: "Logistics", icon: Truck, path: "/logistics", count: "38" },
+    { label: "Teams", icon: Users, path: "/teams", count: "3" },
+    { label: "Assets", icon: Box, path: "/assets", count: "5" },
+    { label: "Alerts", icon: AlertTriangle, path: "/alerts", badge: "8", alert: true },
     { label: "Environment", icon: CloudSun, path: "/system" },
-    { label: "Logistics", icon: Truck, path: "/logistics" },
-    { label: "Teams", icon: Users, path: "/missions" },
-    { label: "Assets", icon: Box, path: "/logistics" },
-    { label: "Alerts", icon: AlertTriangle, path: "/incidents", badge: "2" },
   ];
 
   const manageNavItems = [
@@ -38,7 +47,7 @@ export default function AppLayout() {
   ];
 
   const renderNavItem = (item, isManageAlert = false) => {
-    const currentTab = new URLSearchParams(location.search).get('tab') || 'overview';
+    const currentTab = new URLSearchParams(location.search).get('tab') || 'map';
     const isOverviewActive = item.label === "Overview" && location.pathname === "/dashboard" && currentTab === "overview";
     const isMapActive = item.label === "Map" && location.pathname === "/dashboard" && currentTab === "map";
     const isActive = isOverviewActive || isMapActive || (location.pathname === item.path && item.label !== "Overview" && item.label !== "Map");
@@ -92,20 +101,12 @@ export default function AppLayout() {
         
         {/* Top: Brand Header */}
         <div className="p-5 pb-3 border-b border-slate-100">
-          <Link to="/" className="flex items-center space-x-3 group" title="ARORA Expedition Command">
+          <Link to="/" className="flex items-center group" title="ARORA">
             <img 
               src="/logo.png" 
               alt="ARORA Logo" 
               className="h-8 w-auto object-contain drop-shadow-sm group-hover:scale-105 transition" 
             />
-            <div>
-              <span className="text-lg font-black tracking-wider text-slate-900 uppercase font-sans block leading-none">
-                ARORA
-              </span>
-              <span className="text-[10px] font-mono text-purple-600 font-semibold tracking-wide">
-                Expedition Command
-              </span>
-            </div>
           </Link>
         </div>
 
@@ -145,28 +146,43 @@ export default function AppLayout() {
         </nav>
 
         {/* Bottom: Profile & Station Connectivity Status */}
-        <div className="p-3.5 border-t border-slate-100 bg-slate-50/50">
+        <div className="p-3 border-t border-slate-100 bg-slate-50/50 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-sm border border-white">
-                SR
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-tr ${user?.avatarGradient || 'from-purple-600 to-indigo-600'} flex items-center justify-center text-white font-bold text-xs shadow-sm border border-white shrink-0`}>
+                {user?.initials || 'AH'}
               </div>
-              <div className="text-left leading-tight">
-                <span className="text-xs font-bold text-slate-900 block truncate max-w-[110px]">
-                  Dr. Sunita Rao
+              <div className="text-left leading-tight truncate max-w-[105px]">
+                <span className="text-xs font-bold text-slate-900 block truncate" title={user?.name || "Adina Hawaldar"}>
+                  {user?.name || "Adina Hawaldar"}
                 </span>
-                <span className="text-[10px] font-mono text-slate-500 block">
-                  Commander
+                <span className="text-[10px] font-mono text-slate-500 block truncate" title={user?.role || "Commander"}>
+                  {user?.role || "Commander"}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center space-x-1.5 px-2 py-1 rounded-full bg-white border border-slate-200/80 shadow-xs" title={isOnline ? "Online Gateway" : "Local Offline Core"}>
+            <div className="flex items-center space-x-1.5 px-2 py-0.5 rounded-full bg-white border border-slate-200/80 shadow-xs" title={isOnline ? "Online Gateway" : "Local Offline Core"}>
               <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500 animate-ping' : 'bg-amber-500'}`} />
               <span className="text-[10px] font-mono font-semibold text-slate-600">
                 {isOnline ? "Live" : "Offline"}
               </span>
             </div>
+          </div>
+
+          {/* Quick Sign Out / Switch User Option */}
+          <div className="flex items-center justify-between pt-1 border-t border-slate-200/50 text-[11px] text-slate-500">
+            <span className="font-mono text-[9px] text-slate-400 truncate max-w-[130px]">
+              {user?.email || 'adinahawaldar@gmail.com'}
+            </span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="text-slate-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50 transition flex items-center space-x-1"
+              title="Sign out & return to landing"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
 

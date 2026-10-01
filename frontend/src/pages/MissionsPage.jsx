@@ -1,10 +1,28 @@
 import React, { useState } from 'react';
 import { useOperationalState } from '../context/OperationalStateContext';
-import { Compass, Clock, MapPin, AlertCircle, ChevronRight, CheckCircle2, ShieldAlert, CheckSquare } from 'lucide-react';
+import {
+  Compass,
+  Clock,
+  MapPin,
+  AlertCircle,
+  ChevronRight,
+  CheckCircle2,
+  ShieldAlert,
+  CheckSquare,
+  AlertTriangle,
+  X,
+  Truck,
+  Users,
+  Radio,
+  Navigation,
+  Wind,
+  Thermometer
+} from 'lucide-react';
 
 export default function MissionsPage() {
-  const { missions, cargoList, impactSet, loading } = useOperationalState();
+  const { missions, cargoList, impactSet, loading, assistanceAlert, dispatchRescue } = useOperationalState();
   const [selectedMission, setSelectedMission] = useState(null);
+  const [showSosModal, setShowSosModal] = useState(false);
 
   if (loading) {
     return (
@@ -121,6 +139,61 @@ export default function MissionsPage() {
               )}
             </div>
 
+            {/* Field Personnel Assistance Alert Callout */}
+            {assistanceAlert && (
+              <div className={`p-4 rounded-xl border text-xs ${
+                assistanceAlert.status === 'pending'
+                  ? 'bg-amber-50/90 border-amber-200 text-amber-950'
+                  : 'bg-slate-50 border-slate-200 text-slate-800'
+              }`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start space-x-2.5">
+                    <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 ${
+                      assistanceAlert.status === 'pending' ? 'bg-amber-600 text-white animate-pulse' : 'bg-emerald-600 text-white'
+                    }`}>
+                      <AlertTriangle className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-900 flex items-center space-x-2">
+                        <span>Field Incident: {assistanceAlert.person}</span>
+                        <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                          assistanceAlert.status === 'pending' ? 'bg-amber-200 text-amber-900' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {assistanceAlert.status === 'pending' ? 'ASSISTANCE REQUIRED' : 'RESCUE DISPATCHED'}
+                        </span>
+                      </div>
+                      <p className="text-slate-600 text-[11px] mt-0.5">
+                        Location: <span className="font-semibold text-slate-800">{assistanceAlert.location}</span> · {assistanceAlert.situation}
+                      </p>
+                      {assistanceAlert.status === 'dispatched' && (
+                        <div className="mt-1 text-[11px] font-medium text-emerald-800 flex items-center space-x-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>{assistanceAlert.dispatchedUnit} en route (ETA {assistanceAlert.eta}). Emergency survival shelter protocol active.</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2 shrink-0">
+                    <button
+                      onClick={() => setShowSosModal(true)}
+                      className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium rounded-lg text-xs transition cursor-pointer"
+                    >
+                      View Popup Alert
+                    </button>
+                    {assistanceAlert.status === 'pending' && (
+                      <button
+                        onClick={() => dispatchRescue('Rescue Snowcat-02')}
+                        className="px-3 py-1.5 bg-slate-900 hover:bg-black text-white font-medium rounded-lg text-xs transition cursor-pointer"
+                      >
+                        Dispatch Rescue
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Intelligence Score Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-md space-y-2">
@@ -204,6 +277,124 @@ export default function MissionsPage() {
           </div>
         ) : null}
       </div>
+
+      {/* SOS Alert Modal */}
+      {showSosModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-xl shadow-2xl max-w-lg w-full overflow-hidden text-slate-800">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-700">
+                  <AlertTriangle className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900">Personnel Assistance Alert</h3>
+                  <p className="text-[11px] text-slate-500 font-mono">INCIDENT ID: SOS-ECHO-01 · PRIORITY 1</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSosModal(false)}
+                className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 space-y-4 text-xs">
+              {/* Personnel and Location Card */}
+              <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold text-slate-900 text-sm">{assistanceAlert.person}</div>
+                    <div className="text-slate-500 text-[11px]">{assistanceAlert.role}</div>
+                  </div>
+                  <span className={`text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase ${
+                    assistanceAlert.status === 'pending'
+                      ? 'bg-amber-100 text-amber-900 border border-amber-200'
+                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                  }`}>
+                    {assistanceAlert.status === 'pending' ? 'Needs Assistance' : 'Rescue Active'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200/60 text-[11px]">
+                  <div>
+                    <span className="text-slate-400 block">Sector / Waypoint</span>
+                    <span className="font-medium text-slate-800 flex items-center space-x-1 mt-0.5">
+                      <MapPin className="w-3 h-3 text-slate-500 shrink-0" />
+                      <span>{assistanceAlert.location}</span>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block">Field Weather</span>
+                    <span className="font-medium text-slate-800 flex items-center space-x-1 mt-0.5">
+                      <Thermometer className="w-3 h-3 text-slate-500 shrink-0" />
+                      <span>{assistanceAlert.temperature} · {assistanceAlert.wind}</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Incident Situation */}
+              <div>
+                <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                  Incident Brief
+                </div>
+                <div className="p-3 bg-amber-50/50 border border-amber-100 rounded-lg text-slate-700 leading-relaxed text-xs">
+                  {assistanceAlert.situation}
+                </div>
+              </div>
+
+              {/* Status Update if Dispatched */}
+              {assistanceAlert.status === 'dispatched' ? (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg flex items-start space-x-2.5 text-emerald-900">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-xs">Rescue Response Dispatched</div>
+                    <div className="text-[11px] text-emerald-800 mt-0.5">
+                      Unit: <span className="font-medium">{assistanceAlert.dispatchedUnit}</span> (ETA {assistanceAlert.eta}).
+                      Emergency emergency shelter protocol confirmed with field unit.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg flex items-start space-x-2.5 text-slate-600">
+                  <Radio className="w-4 h-4 text-slate-500 mt-0.5 shrink-0" />
+                  <div>
+                    <div className="font-semibold text-xs text-slate-800">Operational Recommendation</div>
+                    <div className="text-[11px] text-slate-600 mt-0.5">
+                      Polar Safety SOP 4.2 recommends deploying secondary Snowcat recovery unit from Maitri base with auxiliary heating pod and replacement track links.
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="px-5 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-end space-x-2">
+              <button
+                onClick={() => setShowSosModal(false)}
+                className="px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-medium rounded-lg text-xs transition cursor-pointer"
+              >
+                Close
+              </button>
+              {assistanceAlert.status === 'pending' && (
+                <button
+                  onClick={() => {
+                    dispatchRescue('Rescue Snowcat-02');
+                  }}
+                  className="px-4 py-1.5 bg-slate-900 hover:bg-black text-white font-medium rounded-lg text-xs transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+                >
+                  <Truck className="w-3.5 h-3.5" />
+                  <span>Authorize & Dispatch Rescue</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

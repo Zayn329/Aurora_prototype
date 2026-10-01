@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 import worldGrid from './worldGrid.json';
 
 export default function Hero({
@@ -12,6 +13,17 @@ export default function Hero({
   secondaryCtaLink = "/missions"
 }) {
   const canvasRef = useRef(null);
+  const navigate = useNavigate();
+  const { isAuthenticated, openAuthModal } = useAuth();
+
+  const handleStartOperation = (e) => {
+    e.preventDefault();
+    if (isAuthenticated) {
+      navigate(primaryCtaLink);
+    } else {
+      openAuthModal(primaryCtaLink);
+    }
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -129,12 +141,13 @@ export default function Hero({
 
         {/* Action Buttons - lowered down */}
         <div className="mt-9 sm:mt-10 flex flex-row items-center justify-center gap-3.5">
-          <Link
-            to={primaryCtaLink}
-            className="px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-950 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-sky-900/10 active:scale-[0.98]"
+          <button
+            type="button"
+            onClick={handleStartOperation}
+            className="px-5 py-2.5 sm:px-6 sm:py-3 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-950 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md hover:shadow-sky-900/10 active:scale-[0.98] cursor-pointer"
           >
             {primaryCtaText}
-          </Link>
+          </button>
           {secondaryCtaLink.startsWith('/') ? (
             <Link
               to={secondaryCtaLink}

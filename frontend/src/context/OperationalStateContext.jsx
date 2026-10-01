@@ -22,6 +22,37 @@ export function OperationalStateProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Field Assistance & Weather Alert State (Point R-03 Survey Sector Echo)
+  const [assistanceAlert, setAssistanceAlert] = useState({
+    id: 'sos-echo-01',
+    person: 'Dr. Vikram Nair',
+    role: 'Geophysicist (Field Unit 2)',
+    location: 'Survey Sector Echo (Point R-03)',
+    situation: 'Snowcat-04 track failure in sub-zero whiteout. Cabin heat down to 24%. Immediate recovery assistance requested.',
+    status: 'pending', // 'pending' | 'dispatched'
+    dispatchedUnit: null,
+    eta: null,
+    routeDecision: null, // null | 'hold' | 'reroute'
+    temperature: '-42°C',
+    wind: '68 km/h Gale'
+  });
+
+  const dispatchRescue = (unitName = 'Rescue Snowcat-02') => {
+    setAssistanceAlert(prev => ({
+      ...prev,
+      status: 'dispatched',
+      dispatchedUnit: unitName,
+      eta: '42 min'
+    }));
+  };
+
+  const setWeatherRouteDecision = (decision) => {
+    setAssistanceAlert(prev => ({
+      ...prev,
+      routeDecision: decision
+    }));
+  };
+
   // Load state from local IndexedDB client replica
   const loadFromIndexedDB = useCallback(async () => {
     try {
@@ -213,6 +244,9 @@ export function OperationalStateProvider({ children }) {
         simulateDisruption,
         resetSystemState,
         reloadState: syncOperationalState,
+        assistanceAlert,
+        dispatchRescue,
+        setWeatherRouteDecision,
       }}
     >
       {children}
