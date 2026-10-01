@@ -80,6 +80,12 @@ export function AuthProvider({ children }) {
     return authenticatedUser;
   };
 
+  const loginAsDemo = () => {
+    setUser(DEMO_ACCOUNTS[0]);
+    setIsAuthModalOpen(false);
+    return DEMO_ACCOUNTS[0];
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('aurora_auth_user');
@@ -96,6 +102,7 @@ export function AuthProvider({ children }) {
         closeAuthModal,
         loginWithDemoAccount,
         loginWithCredentials,
+        loginAsDemo,
         logout,
         demoAccounts: DEMO_ACCOUNTS
       }}

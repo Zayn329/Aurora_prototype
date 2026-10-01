@@ -7,7 +7,7 @@ export default function Hero({
   titleLine1 = "Plan. Move. Monitor. Respond.",
   titleLine2 = " Across the Polar Frontier.",
   subtitle = "One operational platform for transportation, research, field teams, route intelligence, and emergency response.",
-  primaryCtaText = "Start an operation",
+  primaryCtaText = "Let's Start",
   primaryCtaLink = "/dashboard",
   secondaryCtaText = "See how it works",
   secondaryCtaLink = "/missions"

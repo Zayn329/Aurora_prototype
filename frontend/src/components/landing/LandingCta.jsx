@@ -20,7 +20,7 @@ export default function LandingCta() {
   const navigate = useNavigate();
 
   const handleLaunch = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (isAuthenticated) {
       navigate('/dashboard');
     } else {

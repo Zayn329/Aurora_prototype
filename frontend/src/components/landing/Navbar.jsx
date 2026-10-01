@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Menu, X, ArrowRight, LogOut, ShieldCheck } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, openAuthModal, logout } = useAuth();
+  const { isAuthenticated, openAuthModal } = useAuth();
   const navigate = useNavigate();
 
   const handleGetStarted = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (isAuthenticated) {
       navigate('/dashboard');
     } else {
@@ -57,41 +57,14 @@ export default function Navbar() {
             About
           </a>
 
-          {isAuthenticated && user ? (
-            <div className="flex items-center space-x-3">
-              <Link
-                to="/dashboard"
-                className="flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-sky-100/70 hover:bg-sky-200/70 border border-sky-200/80 transition"
-              >
-                <div className={`w-6 h-6 rounded-full bg-gradient-to-tr ${user.avatarGradient || 'from-indigo-600 to-purple-600'} text-white font-bold text-[10px] flex items-center justify-center`}>
-                  {user.initials || 'U'}
-                </div>
-                <span className="text-xs font-semibold text-slate-800">
-                  {user.name.split(' ')[0]}
-                </span>
-                <span className="text-[10px] bg-sky-200/80 text-sky-900 font-mono px-1 rounded">
-                  Console
-                </span>
-              </Link>
-              <button
-                type="button"
-                onClick={logout}
-                title="Sign out"
-                className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={handleGetStarted}
-              className="px-5 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-black rounded-lg transition shadow-sm hover:shadow active:scale-[0.98] flex items-center space-x-1.5 cursor-pointer"
-            >
-              <span>Get Started</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={handleGetStarted}
+            className="px-5 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-black rounded-lg transition shadow-sm hover:shadow active:scale-[0.98] flex items-center space-x-1.5 cursor-pointer"
+          >
+            <span>Let's Start</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* Mobile Hamburger Toggle */}
@@ -131,35 +104,14 @@ export default function Navbar() {
             </a>
           </div>
           <div className="pt-3 border-t border-sky-200/60">
-            {isAuthenticated && user ? (
-              <div className="flex items-center justify-between">
-                <Link
-                  to="/dashboard"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex-1 py-2 text-center text-sm font-semibold text-white bg-slate-900 rounded-lg shadow-sm flex items-center justify-center space-x-1.5 mr-2"
-                >
-                  <span>Go to Command Console</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => { logout(); setMobileMenuOpen(false); }}
-                  className="p-2 rounded-lg text-rose-600 bg-rose-50 border border-rose-200"
-                  title="Sign out"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={(e) => { setMobileMenuOpen(false); handleGetStarted(e); }}
-                className="w-full text-center py-2.5 text-sm font-semibold text-white bg-slate-900 hover:bg-black rounded-lg shadow-sm flex items-center justify-center space-x-1.5"
-              >
-                <span>Get Started</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={(e) => { setMobileMenuOpen(false); handleGetStarted(e); }}
+              className="w-full text-center py-2.5 text-sm font-semibold text-white bg-slate-900 hover:bg-black rounded-lg shadow-sm flex items-center justify-center space-x-1.5"
+            >
+              <span>Let's Start</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       )}

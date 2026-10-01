@@ -34,6 +34,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import Real3DGlobe, { EXPEDITION_WAYPOINTS } from '../components/Real3DGlobe';
+import EmergencyDistressPopup from '../components/EmergencyDistressPopup';
 import bharatiData from '../data/bharati_mission_dataset.json';
 import { useAuth } from '../context/AuthContext';
 import { useOperationalState } from '../context/OperationalStateContext';
@@ -43,6 +44,9 @@ export default function DashboardPage() {
   const activeTab = searchParams.get('tab') || 'map';
   const { user } = useAuth();
   const { assistanceAlert, dispatchRescue, setWeatherRouteDecision } = useOperationalState();
+
+  // Emergency Distress Popup State (Pops up every time dashboard opens)
+  const [isEmergencyPopupOpen, setIsEmergencyPopupOpen] = useState(true);
 
   // 3D Globe States
   const [isAutoRotating, setIsAutoRotating] = useState(true);
@@ -113,9 +117,37 @@ export default function DashboardPage() {
       {/* ========================================================================= */}
       {/* VIEW A: 3D POLAR GLOBE VIEW                                               */}
       {/* ========================================================================= */}
+      {/* Critical Emergency Distress Modal (Auto-pops on dashboard entry) */}
+      <EmergencyDistressPopup
+        isOpen={isEmergencyPopupOpen}
+        onClose={() => setIsEmergencyPopupOpen(false)}
+      />
+
       {activeTab === 'map' && (
         <div className="relative w-full h-[calc(100vh-4.5rem)] min-h-[640px] overflow-hidden select-none">
           
+          {/* Floating Emergency Reopen Pill on Globe View */}
+          {!isEmergencyPopupOpen && (
+            <div className="absolute top-4 left-6 z-20 pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => setIsEmergencyPopupOpen(true)}
+                className="flex items-center space-x-2.5 px-3.5 py-2 rounded-xl bg-white/95 backdrop-blur-md border border-rose-300 shadow-lg shadow-rose-950/10 hover:border-rose-500 hover:shadow-rose-500/20 transition-all cursor-pointer group"
+              >
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600" />
+                </span>
+                <span className="text-xs font-bold text-rose-700">
+                  SOS: Dr. Vikram Nair in Distress
+                </span>
+                <span className="text-[10px] font-mono bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-bold group-hover:bg-rose-200">
+                  View Alert
+                </span>
+              </button>
+            </div>
+          )}
+
           {/* Full 3D Interactive Rotating Earth Globe Canvas */}
           <div className="absolute inset-0 z-0">
             <Real3DGlobe 
