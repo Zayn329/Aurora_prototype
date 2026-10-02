@@ -31,9 +31,12 @@ export default function IncidentsPage() {
     setSimulating(true);
     try {
       await simulateDisruption({
-        cargo_id: selectedCargoId,
-        delay_days: Number(delayDays),
-        reason: reason,
+        entity_id: selectedCargoId,
+        entity_type: 'CARGO',
+        disruption_type: 'CARGO_DELAY',
+        delay_hours: Number(delayDays) * 24,
+        severity: 'CRITICAL',
+        description: reason,
       });
     } catch (err) {
       console.error('Incident simulation failed:', err);

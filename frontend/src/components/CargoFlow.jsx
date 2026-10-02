@@ -4,6 +4,7 @@ import { Package, Truck, Home, MapPin, AlertTriangle, ArrowRight, CheckCircle2 }
 export default function CargoFlow({ item }) {
   if (!item) return null;
 
+  const itemName = item.item_name ?? item.name ?? item.id ?? 'Unnamed cargo';
   const isDelayed = item.status === 'DELAYED';
 
   const stages = [
@@ -18,7 +19,7 @@ export default function CargoFlow({ item }) {
       <div className="flex items-center justify-between border-b border-slate-100 pb-2">
         <h4 className="text-xs font-semibold text-slate-800 flex items-center space-x-2">
           <Package className="h-4 w-4 text-sky-600" />
-          <span>Cargo Supply Flow Pipeline: {item.name}</span>
+          <span>Cargo Supply Flow Pipeline: {itemName}</span>
         </h4>
         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
           isDelayed ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800'
