@@ -1,5 +1,91 @@
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import earthTextureUrl from '../assets/textures/earth_map.jpg';
+
+// Helper: Generates a high-contrast canvas Earth map so the globe is never blank/blue on initial load or slow networks
+function createFallbackEarthCanvas() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 2048;
+  canvas.height = 1024;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+
+  // Polar Ocean background
+  const oceanGrad = ctx.createLinearGradient(0, 0, 0, 1024);
+  oceanGrad.addColorStop(0, '#0f172a');
+  oceanGrad.addColorStop(0.35, '#1e3a8a');
+  oceanGrad.addColorStop(0.65, '#1e3a8a');
+  oceanGrad.addColorStop(0.85, '#0e7490');
+  oceanGrad.addColorStop(1, '#082f49');
+  ctx.fillStyle = oceanGrad;
+  ctx.fillRect(0, 0, 2048, 1024);
+
+  // Subtle coordinate grid (Latitude & Longitude)
+  ctx.strokeStyle = 'rgba(56, 189, 248, 0.18)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= 2048; x += 170.66) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, 1024);
+    ctx.stroke();
+  }
+  for (let y = 0; y <= 1024; y += 170.66) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(2048, y);
+    ctx.stroke();
+  }
+
+  // Major Continents & Landmasses
+  ctx.fillStyle = '#334155';
+  ctx.strokeStyle = '#475569';
+  ctx.lineWidth = 2;
+
+  // Antarctica (Prominent South Pole Ice Sheet)
+  ctx.fillStyle = '#f8fafc';
+  ctx.beginPath();
+  ctx.ellipse(1024, 930, 950, 130, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#e2e8f0';
+  ctx.beginPath();
+  ctx.ellipse(1024, 910, 850, 100, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Africa & Southern Ocean fringes
+  ctx.fillStyle = '#3b4252';
+  ctx.beginPath();
+  ctx.ellipse(1050, 480, 140, 200, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Eurasia & Indian Ocean Subcontinent
+  ctx.beginPath();
+  ctx.ellipse(1420, 320, 320, 160, -0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(1460, 440, 80, 100, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Australia & Oceania
+  ctx.beginPath();
+  ctx.ellipse(1720, 680, 130, 100, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Americas
+  ctx.beginPath();
+  ctx.ellipse(450, 320, 220, 160, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(650, 650, 110, 190, -0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // North Polar Ice Cap
+  ctx.fillStyle = '#f1f5f9';
+  ctx.beginPath();
+  ctx.ellipse(1024, 30, 700, 45, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  return canvas;
+}
 
 // Realistic Expedition Stations & Nodes
 export const EXPEDITION_WAYPOINTS = [
@@ -204,13 +290,17 @@ export default function Real3DGlobe({
     scene.add(globeGroup);
     globeGroupRef.current = globeGroup;
 
-    // 5. Earth Sphere with High-Res Texture (comfortably larger proportion)
+    // 5. Earth Sphere with High-Res Texture & Instant Procedural Fallback
     const radius = 3.15;
     const sphereGeometry = new THREE.SphereGeometry(radius, 64, 64);
 
+    // Synchronous procedural fallback canvas so globe is NEVER blank/blue on initial render or slow connection
+    const fallbackCanvas = createFallbackEarthCanvas();
+    const fallbackTexture = new THREE.CanvasTexture(fallbackCanvas);
+    fallbackTexture.colorSpace = THREE.SRGBColorSpace;
+
     const earthMaterial = new THREE.MeshStandardMaterial({
-      // Keep the globe self-contained when no external earth texture is bundled.
-      color: 0x93c5fd,
+      map: fallbackTexture,
       roughness: 0.55,
       metalness: 0.05,
       bumpScale: 0.04
@@ -218,6 +308,35 @@ export default function Real3DGlobe({
 
     const earthMesh = new THREE.Mesh(sphereGeometry, earthMaterial);
     globeGroup.add(earthMesh);
+
+    // Asynchronously load the high-res satellite texture (bundled via Vite asset pipeline)
+    const textureLoader = new THREE.TextureLoader();
+    const targetTextureUrl = earthTextureUrl || '/textures/earth_map.jpg';
+
+    textureLoader.load(
+      targetTextureUrl,
+      (loadedTexture) => {
+        loadedTexture.colorSpace = THREE.SRGBColorSpace;
+        earthMaterial.map = loadedTexture;
+        earthMaterial.needsUpdate = true;
+        renderer.render(scene, camera);
+      },
+      undefined,
+      (err) => {
+        console.warn('Vite asset texture load warning, trying public path:', err);
+        textureLoader.load(
+          '/textures/earth_map.jpg',
+          (publicTexture) => {
+            publicTexture.colorSpace = THREE.SRGBColorSpace;
+            earthMaterial.map = publicTexture;
+            earthMaterial.needsUpdate = true;
+            renderer.render(scene, camera);
+          },
+          undefined,
+          (finalErr) => console.warn('Public texture also failed; procedural fallback remains active:', finalErr)
+        );
+      }
+    );
 
     // 6. Subtle Atmosphere Glow Shell
     const atmoGeometry = new THREE.SphereGeometry(radius * 1.02, 48, 48);
